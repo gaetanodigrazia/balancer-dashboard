@@ -1,0 +1,37 @@
+<h2 class="fw-bold text-primary mb-4">📈 Riepilogo Predizioni</h2>
+
+<div class="row">
+  <!-- Ultime predizioni -->
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm p-4 border-0 rounded-4 bg-white">
+      <h5 class="mb-3">🕒 Ultime predizioni</h5>
+      <table class="table table-sm table-borderless align-middle">
+        <thead class="text-secondary small">
+          <tr>
+            <th>ID</th>
+            <th>Tipo</th>
+            <th>Prezzo</th>
+            <th>Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let pred of predizioni" class="border-bottom">
+            <td>{{ pred.id }}</td>
+            <td>{{ pred.tipo }}</td>
+            <td>{{ pred.prezzo | currency:'EUR' }}</td>
+            <td>{{ pred.data }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Totale valutazioni -->
+  <div class="col-md-6 mb-4">
+    <div class="card shadow-sm p-4 border-0 rounded-4 bg-white">
+      <h5 class="mb-3">📊 Totale valutazioni</h5>
+      <p class="mb-2">🏡 Immobili indipendenti: <strong>{{ stats.indipendenti }}</strong></p>
+      <p>🏢 Appartamenti: <strong>{{ stats.appartamenti }}</strong></p>
+    </div>
+  </div>
+</div>
