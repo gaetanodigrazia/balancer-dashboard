@@ -55,14 +55,21 @@
       <th>Quantità Totale</th>
       <th>Prezzo Unitario Medio (€)</th>
       <th>ID Scontrini Associati</th>
+      <th>Azioni</th>
     </tr>
   </thead>
   <tbody>
-    <tr *ngFor="let prodotto of scorte">
+    <tr *ngFor="let prodotto of scorte; let i = index">
       <td>{{ prodotto.nome }}</td>
       <td>{{ prodotto.quantita }}</td>
       <td>{{ prodotto.prezzo_unitario | number:'1.2-2' }}</td>
       <td>{{ prodotto.scontrino_ids.join(', ') }}</td>
+      <td>
+<button (click)="rimuoviProdotto(prodotto.nome, i)" style="color: #d32f2f; border:none; background:none; cursor:pointer;">
+  Rimuovi
+</button>
+
+      </td>
     </tr>
   </tbody>
 </table>

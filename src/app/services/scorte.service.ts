@@ -6,13 +6,25 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class ScorteService {
+  private baseUrl = ''; // Inserisci qui l'URL base del backend, es. 'http://localhost:8000'
+
   constructor(private http: HttpClient) {}
 
   getScorteAttuali(): Observable<any[]> {
-    return this.http.get<any[]>('/prodotti');
+    return this.http.get<any[]>(`${this.baseUrl}/prodotti`);
   }
 
   aggiungiProdotto(prodotto: any): Observable<any> {
-    return this.http.post('/prodotti', prodotto);
+    return this.http.post<any>(`${this.baseUrl}/prodotti`, prodotto);
   }
+
+  rimuoviProdotto(id: number): Observable<any> {
+    // Meglio rimuovere tramite ID, sicuro e semplice
+    return this.http.delete<any>(`${this.baseUrl}/prodotti/${id}`);
+  }
+
+aggiornaScorte(ingredienti: any[]): Observable<any> {
+  return this.http.put('/prodotti/scorte', ingredienti);
+}
+
 }

@@ -37,4 +37,8 @@
   </ul>
   <h4>Procedimento:</h4>
   <p>{{ ricetta.procedimento }}</p>
+
+  <button (click)="cucina()" [disabled]="loading" style="margin-top: 1rem; padding: 0.5rem 1rem;">
+    {{ loading ? 'Aggiornamento in corso...' : 'Cucina' }}
+  </button>
 </div>

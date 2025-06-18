@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import OpenAI
-from pydantic import BaseModel, ValidationError, parse_obj_as
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy import Column, Integer, Float, String, ForeignKey, Text, text, inspect
@@ -13,6 +13,7 @@ import os
 import json
 import re
 from dotenv import load_dotenv
+import logging
 
 # ----------------- MODELLI PYDANTIC -----------------
 class Alimento(BaseModel):
@@ -83,6 +84,10 @@ class RicettaRequest(BaseModel):
     tipo_pasto: str
     tipo_schema: str
 
+class IngredienteUpdate(BaseModel):
+    nome: str
+    quantita: str  # es. "150 gr", "2 pezzi"
+
 # ----------------- ENV -----------------
 load_dotenv()
 DB_USER = os.getenv("DB_USER", "postgres")
@@ -140,7 +145,10 @@ class SchemaNutrizionale(Base):
     grassi = Column(Float, nullable=False)
     proteine = Column(Float, nullable=False)
     acqua = Column(Float, nullable=False)
-    dettagli = Column(Text, nullable=False)  # JSON serializzato come stringa
+    dettagli = Column(Text, nullable=False)
+
+# ----------------- LOGGER -----------------
+logger = logging.getLogger("uvicorn.error")
 
 # ----------------- FUNZIONI UTILI -----------------
 def extract_json(text: str) -> dict:
@@ -148,236 +156,16 @@ def extract_json(text: str) -> dict:
     cleaned = match.group(1) if match else text.strip()
     return json.loads(cleaned)
 
-# ----------------- ROUTE -----------------
-
-@app.post("/schemi-nutrizionali", response_model=List[SchemaNutrizionaleOut])
-async def crea_schemi(schemi: List[SchemaNutrizionaleInput]):
-    saved_schemi = []
-    async with SessionLocal() as session:
-        for schema in schemi:
-            # Converti modelli Pydantic in dict prima di serializzare JSON
-            dettagli_dict = {k: v.dict() for k, v in schema.dettagli.items()}
-            dettagli_json = json.dumps(dettagli_dict)
-
-            existing = await session.execute(
-                text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"),
-                {"nome": schema.nome}
-            )
-            existing_row = existing.first()
-
-            if existing_row:
-                db_schema = await session.get(SchemaNutrizionale, existing_row.id)
-                db_schema.calorie = schema.calorie
-                db_schema.carboidrati = schema.carboidrati
-                db_schema.grassi = schema.grassi
-                db_schema.proteine = schema.proteine
-                db_schema.acqua = schema.acqua
-                db_schema.dettagli = dettagli_json
-            else:
-                db_schema = SchemaNutrizionale(
-                    nome=schema.nome,
-                    calorie=schema.calorie,
-                    carboidrati=schema.carboidrati,
-                    grassi=schema.grassi,
-                    proteine=schema.proteine,
-                    acqua=schema.acqua,
-                    dettagli=dettagli_json
-                )
-                session.add(db_schema)
-
-            saved_schemi.append(db_schema)
-
-        await session.commit()
-        for s in saved_schemi:
-            await session.refresh(s)
-
-    # Converto dettagli JSON in Pydantic per la risposta
-    result = []
-    for s in saved_schemi:
-        try:
-            dettagli_obj = {k: DettagliPasto.parse_obj(v) for k, v in json.loads(s.dettagli).items()}
-        except Exception:
-            dettagli_obj = None
-
-        schema_out = SchemaNutrizionaleOut(
-            id=s.id,
-            nome=s.nome,
-            calorie=s.calorie,
-            carboidrati=s.carboidrati,
-            grassi=s.grassi,
-            proteine=s.proteine,
-            acqua=s.acqua,
-            dettagli=dettagli_obj
-        )
-        result.append(schema_out)
-
-    return result
 
 
-@app.get("/schemi-nutrizionali", response_model=List[SchemaNutrizionaleOut])
-async def get_schemi():
-    async with SessionLocal() as session:
-        result = await session.execute(text("SELECT * FROM schemi_nutrizionali ORDER BY id DESC"))
-        rows = result.fetchall()
-        schemi = []
-        for row in rows:
-            data = dict(row._mapping)
-            if data.get('dettagli'):
-                try:
-                    dettagli_dict = json.loads(data['dettagli'])
-                    dettagli_obj = {k: DettagliPasto.parse_obj(v) for k, v in dettagli_dict.items()}
-                    data['dettagli'] = dettagli_obj
-                except Exception:
-                    data['dettagli'] = {}
-            else:
-                data['dettagli'] = {}
-            schemi.append(data)
-        return schemi
+from fastapi import APIRouter, Body
+
+class MappingRequest(BaseModel):
+    alimenti_schema: List[str]
+    prodotti_disponibili: List[str]
 
 
-@app.post("/ocr-scontrino")
-async def ocr_scontrino(file: UploadFile = File(...)):
-    img_bytes = await file.read()
-    img_b64 = base64.b64encode(img_bytes).decode("utf-8")
-    image_url = f"data:{file.content_type};base64,{img_b64}"
-
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": (
-                                "Estrai i prodotti con quantità e prezzo da questo scontrino "
-                                "e restituisci solo il JSON nel seguente formato:\n"
-                                "{\n"
-                                "  \"prodotti\": [{\"nome\": ..., \"quantita\": ..., \"prezzo_unitario\": ...}],\n"
-                                "  \"totale\": ...,\n"
-                                "  \"data\": \"YYYY-MM-DD\"\n"
-                                "}\n"
-                                "Rispondi solo con un oggetto JSON valido, senza spiegazioni."
-                            ),
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {"url": image_url}
-                        }
-                    ]
-                }
-            ],
-            max_tokens=400
-        )
-        raw_content = response.choices[0].message.content.strip()
-        parsed = extract_json(raw_content)
-        validated = OCRResponse(**parsed)
-
-        async with SessionLocal() as session:
-            scontrino = Scontrino(data=validated.data, totale=validated.totale)
-            session.add(scontrino)
-            await session.flush()
-
-            for p in validated.prodotti:
-                prodotto = Prodotto(
-                    nome=p.nome,
-                    quantita=p.quantita,
-                    prezzo_unitario=p.prezzo_unitario,
-                    scontrino_id=scontrino.id
-                )
-                session.add(prodotto)
-
-            await session.commit()
-
-        return JSONResponse(content={"status": "ok", "data": validated.dict()})
-
-    except (json.JSONDecodeError, ValidationError) as e:
-        return JSONResponse(status_code=422, content={"status": "error", "error": str(e), "raw_response": raw_content})
-    except SQLAlchemyError as db_err:
-        return JSONResponse(status_code=500, content={"status": "error", "error": f"DB error: {str(db_err)}"})
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"status": "error", "error": str(e)})
-
-
-@app.get("/test-db")
-async def test_db():
-    try:
-        async with engine.connect() as conn:
-            await conn.execute(text("SELECT 1"))
-        return {"status": "ok", "message": "Connessione al database riuscita."}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-
-@app.get("/test-db-schema")
-async def test_db_schema():
-    try:
-        async with engine.begin() as conn:
-            def inspect_tables(sync_conn):
-                inspector = inspect(sync_conn)
-                return inspector.get_table_names()
-            tables = await conn.run_sync(inspect_tables)
-        expected_tables = {"scontrini", "prodotti", "schemi_nutrizionali"}
-        missing = list(expected_tables - set(tables))
-        if missing:
-            return {
-                "status": "warning",
-                "message": f"Tabelle mancanti: {missing}",
-                "found_tables": tables
-            }
-        return {"status": "ok", "message": "Tutte le tabelle esistono.", "tables": tables}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
-
-@app.get("/scontrini", response_model=List[ScontrinoOut])
-async def get_scontrini():
-    async with SessionLocal() as session:
-        result = await session.execute(text("SELECT id, data, totale FROM scontrini ORDER BY id DESC"))
-        rows = result.fetchall()
-        return [dict(row._mapping) for row in rows]
-
-
-@app.get("/prodotti", response_model=List[ProdottoOut])
-async def get_prodotti():
-    async with SessionLocal() as session:
-        result = await session.execute(text("SELECT id, nome, quantita, prezzo_unitario, scontrino_id FROM prodotti ORDER BY id DESC"))
-        rows = result.fetchall()
-        return [dict(row._mapping) for row in rows]
-
-
-@app.post("/prodotti", response_model=ProdottoOut)
-async def crea_prodotto(prodotto: ProdottoModel):
-    async with SessionLocal() as session:
-        nuovo = Prodotto(
-            nome=prodotto.nome,
-            quantita=prodotto.quantita,
-            prezzo_unitario=prodotto.prezzo_unitario,
-            scontrino_id=None
-        )
-        session.add(nuovo)
-        await session.commit()
-        await session.refresh(nuovo)
-    return nuovo
-
-
-@app.delete("/prodotti/{id}")
-async def delete_prodotto(id: int):
-    try:
-        async with SessionLocal() as session:
-            prodotto = await session.get(Prodotto, id)
-            if not prodotto:
-                raise HTTPException(status_code=404, detail="Prodotto non trovato")
-            await session.delete(prodotto)
-            await session.commit()
-        return {"status": "ok", "message": f"Prodotto con ID {id} eliminato."}
-    except SQLAlchemyError as e:
-        return {"status": "error", "message": str(e)}
-
-import logging
-
-logger = logging.getLogger("uvicorn.error")  # usa logger di uvicorn
+# ----------------- ENDPOINT -----------------
 
 @app.post("/ricette", response_model=RicettaOutput)
 async def genera_ricette(payload: RicettaRequest = Body(...)):
@@ -399,7 +187,7 @@ async def genera_ricette(payload: RicettaRequest = Body(...)):
 
         schema = dict(schema_row._mapping)
         logger.debug(f"Schema caricato: nome={schema['nome']}, calorie={schema['calorie']}, proteine={schema['proteine']}")
-        
+
         dettagli = json.loads(schema['dettagli']) if schema['dettagli'] else {}
 
         if tipo_pasto not in dettagli:
@@ -407,8 +195,6 @@ async def genera_ricette(payload: RicettaRequest = Body(...)):
             raise HTTPException(status_code=404, detail=f"Nessun dettaglio trovato per tipo pasto '{tipo_pasto}' nello schema '{tipo_schema}'")
 
         dettagli_pasto = dettagli[tipo_pasto]
-        logger.debug(f"dettagli_pasto di tipo '{tipo_pasto}': {type(dettagli_pasto)}")
-
         if not isinstance(dettagli_pasto, dict):
             logger.error(f"dettagli_pasto non è dict ma {type(dettagli_pasto)}")
             raise HTTPException(status_code=500, detail=f"dettagli_pasto non è un dict, ma {type(dettagli_pasto)}")
@@ -517,24 +303,23 @@ async def genera_ricette(payload: RicettaRequest = Body(...)):
         )
 
     prompt = (
-    f"Genera una ricetta equilibrata per il pasto '{tipo_pasto}' "
-    f"seguendo lo schema nutrizionale '{tipo_schema}' con valori minimi: "
-    f"calorie >= {schema['calorie']}, proteine >= {schema['proteine']}g, "
-    f"carboidrati >= {schema['carboidrati']}g, grassi >= {schema['grassi']}g.\n\n"
-    "Usa SOLO gli alimenti indicati di seguito e SOLO nelle quantità specificate (non aggiungere o modificare quantità):\n"
-    + "\n".join(prompt_opzioni) +
-    "\n\n"
-    "Se per qualche macronutriente non ci sono alimenti disponibili nello schema, "
-    "non aggiungere niente ma menziona chiaramente che manca la fonte per quel macronutriente.\n"
-    "Fornisci SOLO una opzione scegliendo UN SOLO alimento per ogni macronutriente presente.\n"
-    "Il risultato deve essere SOLO in questo formato JSON, senza altre spiegazioni:\n"
-    "{\n"
-    "  \"titolo\": \"Titolo della ricetta\",\n"
-    "  \"ingredienti\": [{\"nome\": \"Nome alimento\", \"quantita\": \"Quantità\"}, ...],\n"
-    "  \"procedimento\": \"Procedimento dettagliato della ricetta\"\n"
-    "}"
-)
-
+        f"Genera una ricetta equilibrata per il pasto '{tipo_pasto}' "
+        f"seguendo lo schema nutrizionale '{tipo_schema}' con valori minimi: "
+        f"calorie >= {schema['calorie']}, proteine >= {schema['proteine']}g, "
+        f"carboidrati >= {schema['carboidrati']}g, grassi >= {schema['grassi']}g.\n\n"
+        "Usa SOLO gli alimenti indicati di seguito e SOLO nelle quantità specificate (non aggiungere o modificare quantità):\n"
+        + "\n".join(prompt_opzioni) +
+        "\n\n"
+        "Se per qualche macronutriente non ci sono alimenti disponibili nello schema, "
+        "non aggiungere niente ma menziona chiaramente che manca la fonte per quel macronutriente.\n"
+        "Fornisci SOLO una opzione scegliendo UN SOLO alimento per ogni macronutriente presente.\n"
+        "Il risultato deve essere SOLO in questo formato JSON, senza altre spiegazioni:\n"
+        "{\n"
+        "  \"titolo\": \"Titolo della ricetta\",\n"
+        "  \"ingredienti\": [{\"nome\": \"Nome alimento\", \"quantita\": \"Quantità\"}, ...],\n"
+        "  \"procedimento\": \"Procedimento dettagliato della ricetta\"\n"
+        "}"
+    )
 
     logger.debug(f"Prompt inviato a GPT:\n{prompt}")
 
@@ -563,6 +348,263 @@ async def genera_ricette(payload: RicettaRequest = Body(...)):
         logger.error(f"Errore generazione ricetta: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Errore generazione ricetta: {str(e)}")
 
+
+@app.post("/schemi-nutrizionali", response_model=List[SchemaNutrizionaleOut])
+async def crea_schemi(schemi: List[SchemaNutrizionaleInput]):
+    saved_schemi = []
+    async with SessionLocal() as session:
+        for schema in schemi:
+            dettagli_dict = {k: v.dict() for k, v in schema.dettagli.items()}
+            dettagli_json = json.dumps(dettagli_dict)
+
+            existing = await session.execute(
+                text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"),
+                {"nome": schema.nome}
+            )
+            existing_row = existing.first()
+
+            if existing_row:
+                db_schema = await session.get(SchemaNutrizionale, existing_row.id)
+                db_schema.calorie = schema.calorie
+                db_schema.carboidrati = schema.carboidrati
+                db_schema.grassi = schema.grassi
+                db_schema.proteine = schema.proteine
+                db_schema.acqua = schema.acqua
+                db_schema.dettagli = dettagli_json
+            else:
+                db_schema = SchemaNutrizionale(
+                    nome=schema.nome,
+                    calorie=schema.calorie,
+                    carboidrati=schema.carboidrati,
+                    grassi=schema.grassi,
+                    proteine=schema.proteine,
+                    acqua=schema.acqua,
+                    dettagli=dettagli_json
+                )
+                session.add(db_schema)
+
+            saved_schemi.append(db_schema)
+
+        await session.commit()
+        for s in saved_schemi:
+            await session.refresh(s)
+
+    result = []
+    for s in saved_schemi:
+        try:
+            dettagli_obj = {k: DettagliPasto.parse_obj(v) for k, v in json.loads(s.dettagli).items()}
+        except Exception:
+            dettagli_obj = None
+
+        schema_out = SchemaNutrizionaleOut(
+            id=s.id,
+            nome=s.nome,
+            calorie=s.calorie,
+            carboidrati=s.carboidrati,
+            grassi=s.grassi,
+            proteine=s.proteine,
+            acqua=s.acqua,
+            dettagli=dettagli_obj
+        )
+        result.append(schema_out)
+
+    return result
+
+@app.get("/schemi-nutrizionali", response_model=List[SchemaNutrizionaleOut])
+async def get_schemi():
+    async with SessionLocal() as session:
+        result = await session.execute(text("SELECT * FROM schemi_nutrizionali ORDER BY id DESC"))
+        rows = result.fetchall()
+        schemi = []
+        for row in rows:
+            data = dict(row._mapping)
+            if data.get('dettagli'):
+                try:
+                    dettagli_dict = json.loads(data['dettagli'])
+                    dettagli_obj = {k: DettagliPasto.parse_obj(v) for k, v in dettagli_dict.items()}
+                    data['dettagli'] = dettagli_obj
+                except Exception:
+                    data['dettagli'] = {}
+            else:
+                data['dettagli'] = {}
+            schemi.append(data)
+        return schemi
+
+@app.post("/ocr-scontrino")
+async def ocr_scontrino(file: UploadFile = File(...)):
+    img_bytes = await file.read()
+    img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+    image_url = f"data:{file.content_type};base64,{img_b64}"
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "Estrai i prodotti con quantità e prezzo da questo scontrino "
+                                "e restituisci solo il JSON nel seguente formato:\n"
+                                "{\n"
+                                "  \"prodotti\": [{\"nome\": ..., \"quantita\": ..., \"prezzo_unitario\": ...}],\n"
+                                "  \"totale\": ...,\n"
+                                "  \"data\": \"YYYY-MM-DD\"\n"
+                                "}\n"
+                                "Rispondi solo con un oggetto JSON valido, senza spiegazioni."
+                            ),
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": image_url}
+                        }
+                    ]
+                }
+            ],
+            max_tokens=400
+        )
+        raw_content = response.choices[0].message.content.strip()
+        parsed = extract_json(raw_content)
+        validated = OCRResponse(**parsed)
+
+        async with SessionLocal() as session:
+            scontrino = Scontrino(data=validated.data, totale=validated.totale)
+            session.add(scontrino)
+            await session.flush()
+
+            for p in validated.prodotti:
+                prodotto = Prodotto(
+                    nome=p.nome,
+                    quantita=p.quantita,
+                    prezzo_unitario=p.prezzo_unitario,
+                    scontrino_id=scontrino.id
+                )
+                session.add(prodotto)
+
+            await session.commit()
+
+        return JSONResponse(content={"status": "ok", "data": validated.dict()})
+
+    except (json.JSONDecodeError, ValidationError) as e:
+        return JSONResponse(status_code=422, content={"status": "error", "error": str(e), "raw_response": raw_content})
+    except SQLAlchemyError as db_err:
+        return JSONResponse(status_code=500, content={"status": "error", "error": f"DB error: {str(db_err)}"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "error": str(e)})
+
+@app.get("/test-db")
+async def test_db():
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return {"status": "ok", "message": "Connessione al database riuscita."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/test-db-schema")
+async def test_db_schema():
+    try:
+        async with engine.begin() as conn:
+            def inspect_tables(sync_conn):
+                inspector = inspect(sync_conn)
+                return inspector.get_table_names()
+            tables = await conn.run_sync(inspect_tables)
+        expected_tables = {"scontrini", "prodotti", "schemi_nutrizionali"}
+        missing = list(expected_tables - set(tables))
+        if missing:
+            return {
+                "status": "warning",
+                "message": f"Tabelle mancanti: {missing}",
+                "found_tables": tables
+            }
+        return {"status": "ok", "message": "Tutte le tabelle esistono.", "tables": tables}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/scontrini", response_model=List[ScontrinoOut])
+async def get_scontrini():
+    async with SessionLocal() as session:
+        result = await session.execute(text("SELECT id, data, totale FROM scontrini ORDER BY id DESC"))
+        rows = result.fetchall()
+        return [dict(row._mapping) for row in rows]
+
+@app.get("/prodotti", response_model=List[ProdottoOut])
+async def get_prodotti():
+    async with SessionLocal() as session:
+        result = await session.execute(text("SELECT id, nome, quantita, prezzo_unitario, scontrino_id FROM prodotti ORDER BY id DESC"))
+        rows = result.fetchall()
+        return [dict(row._mapping) for row in rows]
+
+@app.post("/prodotti", response_model=ProdottoOut)
+async def crea_prodotto(prodotto: ProdottoModel):
+    async with SessionLocal() as session:
+        nuovo = Prodotto(
+            nome=prodotto.nome,
+            quantita=prodotto.quantita,
+            prezzo_unitario=prodotto.prezzo_unitario,
+            scontrino_id=None
+        )
+        session.add(nuovo)
+        await session.commit()
+        await session.refresh(nuovo)
+    return nuovo
+
+@app.delete("/prodotti/{id}")
+async def delete_prodotto(id: int):
+    try:
+        async with SessionLocal() as session:
+            prodotto = await session.get(Prodotto, id)
+            if not prodotto:
+                raise HTTPException(status_code=404, detail="Prodotto non trovato")
+            await session.delete(prodotto)
+            await session.commit()
+        return {"status": "ok", "message": f"Prodotto con ID {id} eliminato."}
+    except SQLAlchemyError as e:
+        return {"status": "error", "message": str(e)}
+
+@app.delete("/prodotti/nome/{nome}")
+async def delete_prodotto_per_nome(nome: str):
+    async with SessionLocal() as session:
+        prodotti = await session.execute(
+            text("SELECT * FROM prodotti WHERE LOWER(nome) = :nome"),
+            {"nome": nome.lower()}
+        )
+        rows = prodotti.fetchall()
+        if not rows:
+            raise HTTPException(status_code=404, detail="Prodotto non trovato")
+        for row in rows:
+            prodotto = await session.get(Prodotto, row.id)
+            if prodotto:
+                await session.delete(prodotto)
+        await session.commit()
+    return {"status": "ok", "message": f"Prodotti con nome '{nome}' eliminati."}
+
+@app.put("/prodotti/scorte")
+async def aggiorna_scorte(ingredienti: List[IngredienteUpdate]):
+    async with SessionLocal() as session:
+        for ingr in ingredienti:
+            prodotto = await session.execute(
+                text("SELECT * FROM prodotti WHERE lower(nome) = :nome"),
+                {"nome": ingr.nome.lower()}
+            )
+            prod_row = prodotto.first()
+            if not prod_row:
+                # Prodotto non trovato, ignora o logga
+                continue
+            prodotto_db = await session.get(Prodotto, prod_row.id)
+
+            # Converti quantita da stringa a valore numerico, se possibile
+            try:
+                quantita_da_rimuovere = float(re.findall(r"[\d\.]+", ingr.quantita)[0])
+            except Exception:
+                quantita_da_rimuovere = 0
+
+            prodotto_db.quantita = max(prodotto_db.quantita - quantita_da_rimuovere, 0)
+
+        await session.commit()
+    return {"status": "ok", "message": "Scorte aggiornate."}
 
 @app.post("/init-db")
 async def create_tables():

@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { ScorteService } from '../services/scorte.service';
 
 interface Ingrediente {
   nome: string;
@@ -24,7 +25,7 @@ export class RicetteComponent {
   loading = false;
   error: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private scorteService: ScorteService) {}
 
   generaRicetta() {
     if (!this.tipoPasto || !this.tipoSchema) {
@@ -38,7 +39,7 @@ export class RicetteComponent {
 
     const payload = {
       tipo_pasto: this.tipoPasto,
-      tipo_schema: this.tipoSchema,  // Includi tipo schema nel payload
+      tipo_schema: this.tipoSchema,
     };
 
     this.http.post<Ricetta>('/ricette', payload).subscribe({
@@ -48,6 +49,36 @@ export class RicetteComponent {
       },
       error: (err) => {
         this.error = err.error?.detail || 'Errore durante la generazione della ricetta.';
+        this.loading = false;
+      }
+    });
+  }
+
+  cucina() {
+    if (!this.ricetta || !this.ricetta.ingredienti || this.ricetta.ingredienti.length === 0) {
+      alert('Nessuna ricetta valida per aggiornare le scorte.');
+      return;
+    }
+
+    this.loading = true;
+    this.error = null;
+
+    // Prepara payload con gli ingredienti da rimuovere
+    const ingredientiDaRimuovere = this.ricetta.ingredienti.map(ingr => ({
+      nome: ingr.nome,
+      quantita: ingr.quantita
+    }));
+
+    this.scorteService.aggiornaScorte(ingredientiDaRimuovere).subscribe({
+      next: () => {
+        alert('Scorte aggiornate correttamente.');
+        this.loading = false;
+        this.ricetta = null; // Resetta la ricetta visualizzata
+        // Se vuoi aggiornare le scorte nella UI, chiama qui il metodo adatto
+        // Esempio: this.caricaScorte() se definito
+      },
+      error: (err) => {
+        this.error = 'Errore durante l\'aggiornamento delle scorte: ' + (err.message || err);
         this.loading = false;
       }
     });

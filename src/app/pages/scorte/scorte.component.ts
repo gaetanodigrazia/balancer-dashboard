@@ -47,9 +47,7 @@ export class ScorteComponent implements OnInit {
 
     this.scorteService.aggiungiProdotto(this.nuovoProdotto).subscribe({
       next: () => {
-        // Reset form
         this.nuovoProdotto = { nome: '', quantita: 1, prezzo_unitario: 0 };
-        // Ricarica lista prodotti
         this.caricaScorte();
       },
       error: () => {
@@ -65,6 +63,7 @@ export class ScorteComponent implements OnInit {
       prezzo_unitario_tot: number;
       count: number;
       scontrino_ids: Set<number | null>;
+      ids: Set<number>;
     }>();
 
     prodotti.forEach(p => {
@@ -75,7 +74,8 @@ export class ScorteComponent implements OnInit {
           quantita: p.quantita,
           prezzo_unitario_tot: p.prezzo_unitario * p.quantita,
           count: p.quantita,
-          scontrino_ids: new Set(p.scontrino_id !== null ? [p.scontrino_id] : [])
+          scontrino_ids: new Set(p.scontrino_id !== null ? [p.scontrino_id] : []),
+          ids: new Set(p.id ? [p.id] : [])
         });
       } else {
         const entry = map.get(key)!;
@@ -84,6 +84,7 @@ export class ScorteComponent implements OnInit {
         entry.count += p.quantita;
         if (p.scontrino_id === null) entry.scontrino_ids.add(999);
         if (p.scontrino_id !== null) entry.scontrino_ids.add(p.scontrino_id);
+        if (p.id) entry.ids.add(p.id);
       }
     });
 
@@ -91,7 +92,19 @@ export class ScorteComponent implements OnInit {
       nome: entry.nome,
       quantita: entry.quantita,
       prezzo_unitario: entry.prezzo_unitario_tot / entry.count,
-      scontrino_ids: Array.from(entry.scontrino_ids)
+      scontrino_ids: Array.from(entry.scontrino_ids),
+      ids: Array.from(entry.ids)
     }));
+  }
+
+  rimuoviProdotto(id: number) {
+    this.scorteService.rimuoviProdotto(id).subscribe({
+      next: () => {
+        this.caricaScorte();
+      },
+      error: (err) => {
+        alert('Errore durante la rimozione del prodotto: ' + (err.message || err));
+      }
+    });
   }
 }
