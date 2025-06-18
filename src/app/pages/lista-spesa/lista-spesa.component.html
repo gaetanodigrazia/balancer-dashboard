@@ -1,0 +1,21 @@
+<h2>Lista della Spesa</h2>
+<input [(ngModel)]="nuovoItem" placeholder="Aggiungi prodotto" />
+<button (click)="aggiungi()">Aggiungi</button>
+
+<ul>
+  <li *ngFor="let item of lista; let i = index">
+    {{ item }} <button (click)="rimuovi(i)">X</button>
+  </li>
+</ul>
+
+<h3>Scorte Disponibili</h3>
+<ul *ngIf="scorte.length > 0; else noScorte">
+  <li *ngFor="let scorta of scorte">
+    {{ scorta.nome }} - {{ scorta.quantita }} pezzi ({{ scorta.prezzo_unitario | currency }})
+  </li>
+</ul>
+<ng-template #noScorte>
+  <p>Nessuna scorta disponibile.</p>
+</ng-template>
+
+<button (click)="esportaPDF()">Esporta PDF</button>

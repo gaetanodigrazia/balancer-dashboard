@@ -7,6 +7,6 @@ export class TraceService {
   constructor(private http: HttpClient) {}
 
   getArchived(): Observable<any[]> {
-    return this.http.get<any[]>('/api/traces/archived');
+    return this.http.get<any[]>('http://localhost:9090/api/traces');
   }
 }

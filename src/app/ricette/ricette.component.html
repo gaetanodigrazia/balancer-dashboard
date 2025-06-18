@@ -1,0 +1,40 @@
+<h2>Genera Ricetta</h2>
+
+<form (ngSubmit)="generaRicetta()" #ricettaForm="ngForm" class="ricetta-form">
+
+  <label for="tipo-pasto">Tipo di pasto:</label>
+  <select id="tipo-pasto" [(ngModel)]="tipoPasto" name="tipoPasto" required>
+    <option value="colazione">Colazione</option>
+    <option value="spuntino_1">Spuntino 1</option>
+    <option value="pranzo">Pranzo</option>
+    <option value="spuntino_2">Spuntino 2</option>
+    <option value="cena">Cena</option>
+  </select>
+
+  <label for="tipo-schema" style="margin-left:1rem;">Tipo di schema:</label>
+  <select id="tipo-schema" [(ngModel)]="tipoSchema" name="tipoSchema" required>
+    <option value="on">On</option>
+    <option value="off">Off</option>
+  </select>
+
+  <button type="submit" [disabled]="ricettaForm.invalid || loading" style="margin-left:1rem;">
+    {{ loading ? 'Generazione in corso...' : 'Genera Ricetta' }}
+  </button>
+
+</form>
+
+<div *ngIf="error" style="color: #d32f2f; margin-top: 1rem; font-weight: 600;">
+  {{ error }}
+</div>
+
+<div *ngIf="ricetta" style="margin-top: 2rem; padding: 1rem; background: #fafafa; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1);">
+  <h3>{{ ricetta.titolo }}</h3>
+  <h4>Ingredienti:</h4>
+  <ul>
+    <li *ngFor="let ingr of ricetta.ingredienti">
+      {{ ingr.nome }} - {{ ingr.quantita }}
+    </li>
+  </ul>
+  <h4>Procedimento:</h4>
+  <p>{{ ricetta.procedimento }}</p>
+</div>

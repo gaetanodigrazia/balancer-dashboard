@@ -1,0 +1,76 @@
+<h2>Inserisci Schema Nutrizionale</h2>
+
+<form (submit)="inviaSchema(); $event.preventDefault()" novalidate>
+  <div>
+    <label>Nome schema:</label><br />
+    <input type="text" [(ngModel)]="nome" name="nome" required autocomplete="off" />
+  </div>
+  <div>
+    <label>Calorie:</label><br />
+    <input type="number" [(ngModel)]="calorie" name="calorie" required min="0" step="0.01" />
+  </div>
+  <div>
+    <label>Carboidrati (g):</label><br />
+    <input type="number" [(ngModel)]="carboidrati" name="carboidrati" required min="0" step="0.01" />
+  </div>
+  <div>
+    <label>Grassi (g):</label><br />
+    <input type="number" [(ngModel)]="grassi" name="grassi" required min="0" step="0.01" />
+  </div>
+  <div>
+    <label>Proteine (g):</label><br />
+    <input type="number" [(ngModel)]="proteine" name="proteine" required min="0" step="0.01" />
+  </div>
+  <div>
+    <label>Acqua (L):</label><br />
+    <input type="number" [(ngModel)]="acqua" name="acqua" required min="0" step="0.01" />
+  </div>
+
+  <hr />
+
+  <div *ngFor="let pasto of ['colazione', 'spuntino_1', 'pranzo', 'spuntino_2', 'pre_intra_post_workout', 'cena']">
+    <h3>{{ pasto | titlecase }}</h3>
+
+    <button type="button" (click)="aggiungiOpzione(pasto)">+ Aggiungi opzione</button>
+
+    <div *ngFor="let opzione of dettagli[pasto]; let i = index" style="border:1px solid #ccc; margin:10px 0; padding:10px;">
+      <div style="display:flex; justify-content: space-between; align-items: center;">
+        <strong>Opzione {{ i + 1 }}</strong>
+        <button type="button" (click)="rimuoviOpzione(pasto, i)">Rimuovi opzione</button>
+      </div>
+
+      <div *ngFor="let alimento of opzione; let j = index" style="margin-top:5px;">
+        <input
+          type="text"
+          [(ngModel)]="alimento.nome"
+          name="{{ pasto }}_opzione{{i}}_alimento{{j}}_nome"
+          placeholder="Nome alimento"
+          required
+          autocomplete="off"
+          style="width: 60%; margin-right: 5px;"
+        />
+        <input
+          type="number"
+          [(ngModel)]="alimento.grammi"
+          name="{{ pasto }}_opzione{{i}}_alimento{{j}}_grammi"
+          placeholder="Grammi"
+          min="0"
+          step="0.01"
+          required
+          style="width: 30%;"
+        />
+        <button type="button" (click)="rimuoviAlimento(pasto, i, j)">X</button>
+      </div>
+
+      <button type="button" (click)="aggiungiAlimento(pasto, i)" style="margin-top:5px;">
+        + Aggiungi alimento
+      </button>
+    </div>
+  </div>
+
+  <button type="submit" [disabled]="loading" style="margin-top:20px;">Salva Schema</button>
+</form>
+
+<div *ngIf="loading">Salvataggio in corso...</div>
+<div *ngIf="message" style="color: green;">{{ message }}</div>
+<div *ngIf="error" style="color: red;">{{ error }}</div>
