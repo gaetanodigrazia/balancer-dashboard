@@ -1,4 +1,4 @@
 dist/
 .angular/
 node_modules/
-./backend/.env
+back-end/.env
