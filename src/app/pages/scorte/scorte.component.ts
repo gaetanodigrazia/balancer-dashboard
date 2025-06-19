@@ -14,6 +14,7 @@ export class ScorteComponent implements OnInit {
   nuovoProdotto = {
     nome: '',
     quantita: 1,
+    quantita_grammi: 0,
     prezzo_unitario: 0
   };
 
@@ -40,14 +41,20 @@ export class ScorteComponent implements OnInit {
   }
 
   aggiungiProdotto() {
-    if (!this.nuovoProdotto.nome.trim() || this.nuovoProdotto.quantita < 1 || this.nuovoProdotto.prezzo_unitario < 0) {
+    if (
+      !this.nuovoProdotto.nome.trim() ||
+      this.nuovoProdotto.quantita < 1 ||
+      this.nuovoProdotto.prezzo_unitario < 0
+    ) {
       alert('Inserisci dati validi per il prodotto');
       return;
     }
 
     this.scorteService.aggiungiProdotto(this.nuovoProdotto).subscribe({
       next: () => {
-        this.nuovoProdotto = { nome: '', quantita: 1, prezzo_unitario: 0 };
+        // Reset form
+        this.nuovoProdotto = { nome: '', quantita: 1, quantita_grammi: 0, prezzo_unitario: 0 };
+        // Ricarica lista prodotti
         this.caricaScorte();
       },
       error: () => {
@@ -57,14 +64,17 @@ export class ScorteComponent implements OnInit {
   }
 
   raggruppaPerNome(prodotti: any[]) {
-    const map = new Map<string, {
-      nome: string;
-      quantita: number;
-      prezzo_unitario_tot: number;
-      count: number;
-      scontrino_ids: Set<number | null>;
-      ids: Set<number>;
-    }>();
+    const map = new Map<
+      string,
+      {
+        nome: string;
+        quantita: number;
+        quantita_grammi: number;
+        prezzo_unitario_tot: number;
+        count: number;
+        scontrino_ids: Set<number | null>;
+      }
+    >();
 
     prodotti.forEach(p => {
       const key = p.nome;
@@ -72,28 +82,28 @@ export class ScorteComponent implements OnInit {
         map.set(key, {
           nome: p.nome,
           quantita: p.quantita,
+          quantita_grammi: p.quantita_grammi ?? 0,
           prezzo_unitario_tot: p.prezzo_unitario * p.quantita,
           count: p.quantita,
-          scontrino_ids: new Set(p.scontrino_id !== null ? [p.scontrino_id] : []),
-          ids: new Set(p.id ? [p.id] : [])
+          scontrino_ids: new Set(p.scontrino_id !== null ? [p.scontrino_id] : [])
         });
       } else {
         const entry = map.get(key)!;
         entry.quantita += p.quantita;
+        entry.quantita_grammi += p.quantita_grammi ?? 0;
         entry.prezzo_unitario_tot += p.prezzo_unitario * p.quantita;
         entry.count += p.quantita;
         if (p.scontrino_id === null) entry.scontrino_ids.add(999);
         if (p.scontrino_id !== null) entry.scontrino_ids.add(p.scontrino_id);
-        if (p.id) entry.ids.add(p.id);
       }
     });
 
     return Array.from(map.values()).map(entry => ({
       nome: entry.nome,
       quantita: entry.quantita,
+      quantita_grammi: entry.quantita_grammi,
       prezzo_unitario: entry.prezzo_unitario_tot / entry.count,
-      scontrino_ids: Array.from(entry.scontrino_ids),
-      ids: Array.from(entry.ids)
+      scontrino_ids: Array.from(entry.scontrino_ids)
     }));
   }
 
@@ -107,4 +117,31 @@ export class ScorteComponent implements OnInit {
       }
     });
   }
+
+  
+  // Rimuovi aggiornaQuantita, non più necessario
+
+salvaQuantitaAggiornata(prodotto: any) {
+  if (!prodotto.id) {
+    console.warn('Prodotto senza id, impossibile aggiornare');
+    return;
+  }
+
+  const datiAggiornati = {
+    quantita: prodotto.quantita,
+    quantita_grammi: prodotto.quantita_grammi ?? 0,
+  };
+
+  this.scorteService.aggiornaProdotto(prodotto.id, datiAggiornati).subscribe({
+    next: () => {
+      alert(`Prodotto ${prodotto.nome} aggiornato correttamente.`);
+      // Se vuoi puoi ricaricare la lista prodotti per sicurezza:
+      // this.caricaScorte();
+    },
+    error: (err) => {
+      alert(`Errore durante l'aggiornamento del prodotto ${prodotto.nome}: ${err.message || err}`);
+    }
+  });
+}
+
 }

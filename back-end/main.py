@@ -48,7 +48,9 @@ class SchemaNutrizionaleOut(SchemaNutrizionaleInput):
 class ProdottoModel(BaseModel):
     nome: str
     quantita: int
+    quantita_grammi: Optional[float] = None
     prezzo_unitario: float
+
 
 class OCRResponse(BaseModel):
     prodotti: List[ProdottoModel]
@@ -131,7 +133,8 @@ class Prodotto(Base):
     __tablename__ = "prodotti"
     id = Column(Integer, primary_key=True, index=True)
     nome = Column(String)
-    quantita = Column(Integer)
+    quantita = Column(Integer)  # quantità in pezzi
+    quantita_grammi = Column(Float, nullable=True)  # nuova colonna quantità in grammi
     prezzo_unitario = Column(Float)
     scontrino_id = Column(Integer, ForeignKey("scontrini.id"), nullable=True)
     scontrino = relationship("Scontrino", back_populates="prodotti")

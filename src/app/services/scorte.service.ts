@@ -26,5 +26,9 @@ export class ScorteService {
 aggiornaScorte(ingredienti: any[]): Observable<any> {
   return this.http.put('/prodotti/scorte', ingredienti);
 }
+aggiornaProdotto(id: number, dati: { quantita: number; quantita_grammi: number }): Observable<any> {
+  return this.http.put(`${this.baseUrl}/prodotti/${id}`, dati);
+}
+
 
 }

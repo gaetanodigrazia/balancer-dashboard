@@ -19,7 +19,7 @@
   </div>
 
   <div>
-    <label for="quantita">Quantità:</label><br />
+    <label for="quantita">Quantità (pezzi):</label><br />
     <input
       id="quantita"
       type="number"
@@ -28,6 +28,19 @@
       name="quantita"
       required
       min="1"
+    />
+  </div>
+
+  <div>
+    <label for="quantita_grammi">Quantità (grammi):</label><br />
+    <input
+      id="quantita_grammi"
+      type="number"
+      placeholder="Es. 200"
+      [(ngModel)]="nuovoProdotto.quantita_grammi"
+      name="quantita_grammi"
+      min="0"
+      step="any"
     />
   </div>
 
@@ -52,7 +65,8 @@
   <thead>
     <tr>
       <th>Nome</th>
-      <th>Quantità Totale</th>
+      <th>Quantità Totale (pezzi)</th>
+      <th>Quantità Totale (grammi)</th>
       <th>Prezzo Unitario Medio (€)</th>
       <th>ID Scontrini Associati</th>
       <th>Azioni</th>
@@ -61,18 +75,41 @@
   <tbody>
     <tr *ngFor="let prodotto of scorte; let i = index">
       <td>{{ prodotto.nome }}</td>
-      <td>{{ prodotto.quantita }}</td>
+      <td>
+        <input
+          type="number"
+          [value]="prodotto.quantita"
+          (input)="prodotto.quantita = $event.target.valueAsNumber"
+          min="0"
+        />
+      </td>
+      <td>
+        <input
+          type="number"
+          [value]="prodotto.quantita_grammi"
+          (input)="prodotto.quantita_grammi = $event.target.valueAsNumber"
+          min="0"
+          step="0.01"
+        />
+      </td>
       <td>{{ prodotto.prezzo_unitario | number:'1.2-2' }}</td>
       <td>{{ prodotto.scontrino_ids.join(', ') }}</td>
       <td>
-<button (click)="rimuoviProdotto(prodotto.nome, i)" style="color: #d32f2f; border:none; background:none; cursor:pointer;">
-  Rimuovi
-</button>
-
+        <button (click)="salvaQuantitaAggiornata(prodotto)" style="margin-right: 0.5rem;">
+          Salva
+        </button>
+        <button
+          (click)="rimuoviProdotto(prodotto.id)"
+          style="color: #d32f2f; border:none; background:none; cursor:pointer;"
+        >
+          Rimuovi
+        </button>
       </td>
     </tr>
   </tbody>
 </table>
+
+
 
 <div *ngIf="!loading && !error && scorte.length === 0">
   Nessun prodotto presente nelle scorte.
