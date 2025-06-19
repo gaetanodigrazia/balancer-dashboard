@@ -14,7 +14,11 @@ export interface SchemaBrief {
 }
 
 
-export type Opzione = Alimento[];
+export interface Opzione {
+  id?: string;
+  alimenti: Alimento[];
+  salvata?: boolean;
+}
 
 export interface DettagliPasto {
   opzioni: Opzione[];
@@ -79,5 +83,13 @@ salvaDettagliSingoloPasto(payload: {
 getSchemaById(id: number) {
   return this.http.get<SchemaBrief>(`/schemi-nutrizionali/${id}`);
 }
+
+rimuoviOpzione(schemaId: number, tipoPasto: string, opzioneId: string) {
+  return this.http.delete(
+    `/schemi-nutrizionali/${schemaId}/opzione/${tipoPasto}/${opzioneId}/`
+  );
+}
+
+
 
 }

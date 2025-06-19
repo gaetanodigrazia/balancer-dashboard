@@ -10,9 +10,11 @@ class GruppoAlimenti(BaseModel):
     alimenti: List[Alimento]
 
 class Opzione(BaseModel):
+    id: Optional[str] = None
     opzione: int
     gruppi_alimenti: List[GruppoAlimenti]
-
+    salvata: bool = True
+    
 class DettagliPasto(BaseModel):
     opzioni: List[Opzione]
 

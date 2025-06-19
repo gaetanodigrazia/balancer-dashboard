@@ -188,6 +188,10 @@ async def salva_singolo_pasto(payload: dict = Body(...)):
     if not all([nome, tipo_schema, tipo_pasto, dettagli]):
         raise HTTPException(status_code=400, detail="Tutti i campi sono obbligatori")
 
+    # ✅ Imposta "salvata": True in ogni opzione
+    for opzione in dettagli.get("opzioni", []):
+        opzione["salvata"] = True
+
     async with SessionLocal() as session:
         existing = await session.execute(
             text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"),
@@ -198,11 +202,12 @@ async def salva_singolo_pasto(payload: dict = Body(...)):
             raise HTTPException(status_code=404, detail="Schema nutrizionale non trovato")
 
         db_schema = await session.get(SchemaNutrizionale, existing_row.id)
-        dettagli_dict = json.loads(db_schema.dettagli) if db_schema.dettagli else {}
+        dettagli_dict = json.loads(db_schema.dettagli or '{}')
 
+        # ✅ Sovrascrive solo le opzioni di quel tipo_pasto
         dettagli_dict[tipo_pasto] = dettagli
-        db_schema.dettagli = json.dumps(dettagli_dict)
 
+        db_schema.dettagli = json.dumps(dettagli_dict)
         await session.commit()
         await session.refresh(db_schema)
 
@@ -236,3 +241,34 @@ async def get_schema(schema_id: int):
             data["dettagli"] = {}
 
         return data
+
+
+@router.delete("/opzione")
+async def elimina_opzione(
+    data: dict = Body(...)
+):
+    nome = data.get("nome")
+    tipo_pasto = data.get("tipoPasto")
+    opzione_id = data.get("opzioneId")
+
+    if not all([nome, tipo_pasto, opzione_id]):
+        raise HTTPException(status_code=400, detail="Dati incompleti")
+
+    async with SessionLocal() as session:
+        existing = await session.execute(text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"), {"nome": nome})
+        row = existing.first()
+        if not row:
+            raise HTTPException(status_code=404, detail="Schema non trovato")
+
+        db_schema = await session.get(SchemaNutrizionale, row.id)
+        dettagli_dict = json.loads(db_schema.dettagli or '{}')
+
+        if tipo_pasto not in dettagli_dict:
+            raise HTTPException(status_code=404, detail="Tipo pasto non trovato")
+
+        opzioni = dettagli_dict[tipo_pasto]["opzioni"]
+        dettagli_dict[tipo_pasto]["opzioni"] = [op for op in opzioni if op.get("id") != opzione_id]
+
+        db_schema.dettagli = json.dumps(dettagli_dict)
+        await session.commit()
+        return {"status": "ok", "message": "Opzione rimossa"}

@@ -3,21 +3,33 @@
 
   <div *ngFor="let tipo of tipiPasto" class="mb-4">
     <h6 class="text-primary text-uppercase">{{ formatTipoPasto(tipo) }}</h6>
-
     <button class="btn btn-sm btn-success mb-2" (click)="aggiungiOpzione(tipo)">+ Aggiungi Opzione</button>
 
     <div *ngIf="dettagliPasti[tipo]?.opzioni?.length > 0; else nessunaOpzione">
-      <div *ngFor="let opzione of dettagliPasti[tipo].opzioni; let i = index" class="mb-3 border rounded p-3 bg-light">
+      <div *ngFor="let opzione of dettagliPasti[tipo].opzioni; let i = index"
+           [@fadeAnimation]
+           class="mb-3 border rounded p-3 bg-light">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <strong>Opzione {{ i + 1 }}</strong>
-          <button class="btn btn-sm btn-danger" (click)="rimuoviOpzione(tipo, i)">Rimuovi Opzione</button>
+          <button *ngIf="opzione.salvata"
+                  class="btn btn-sm btn-danger"
+                  (click)="confirmModal(tipo, opzione.id)">
+            Rimuovi Opzione
+          </button>
+          <button *ngIf="!opzione.salvata"
+                  class="btn btn-sm btn-danger"
+                  (click)="rimuoviOpzione(tipo, i)">
+            Rimuovi Opzione
+          </button>
         </div>
 
-        <div *ngFor="let alimento of opzione; let j = index" class="mb-2 bg-white p-2 rounded shadow-sm">
+        <div *ngFor="let alimento of opzione.alimenti; let j = index" class="mb-2 bg-white p-2 rounded shadow-sm">
           <div class="row g-2 align-items-center">
             <div class="col-auto">
-              <select class="form-select form-select-sm" [(ngModel)]="alimento.macronutriente"
-                (change)="macronutrienteChanged(tipo, i, j)">
+              <select class="form-select form-select-sm"
+                      [(ngModel)]="alimento.macronutriente"
+                      [disabled]="opzione.salvata"
+                      (change)="macronutrienteChanged(tipo, i, j)">
                 <option value="" disabled>Seleziona Macronutriente</option>
                 <option value="carboidrati">Carboidrati</option>
                 <option value="grassi">Grassi</option>
@@ -26,49 +38,61 @@
               </select>
             </div>
             <div class="col">
-              <input type="text" class="form-control form-control-sm" placeholder="Nome alimento"
-                [(ngModel)]="alimento.nome" />
+              <input type="text" class="form-control form-control-sm"
+                     [(ngModel)]="alimento.nome"
+                     placeholder="Nome alimento"
+                     [disabled]="opzione.salvata">
             </div>
             <div class="col-auto">
               <input type="number" class="form-control form-control-sm" placeholder="Grammi" min="0" step="0.01"
-                [(ngModel)]="alimento.grammi" />
+                     [(ngModel)]="alimento.grammi"
+                     [disabled]="opzione.salvata">
             </div>
-            <div class="col-auto">
-              <button class="btn btn-sm btn-outline-danger" (click)="rimuoviAlimento(tipo, i, j)">&times;</button>
+            <div class="col-auto" *ngIf="!opzione.salvata">
+              <button class="btn btn-sm btn-outline-danger" (click)="rimuoviAlimento(tipo, i, j)">
+                &times;
+              </button>
             </div>
           </div>
 
-          <!-- Se macronutriente è gruppo mostra sub-alimenti -->
+          <!-- Sub-alimenti -->
           <div *ngIf="alimento.macronutriente === 'gruppo'">
             <div *ngFor="let sub of alimento.gruppoAlimenti; let k = index" class="mt-2 border rounded p-2 bg-white">
               <div class="d-flex align-items-center gap-2">
                 <input type="text" class="form-control form-control-sm" placeholder="Nome sub-alimento"
-                  [(ngModel)]="sub.nome" />
-                <select class="form-select form-select-sm" [(ngModel)]="sub.macronutriente">
+                       [(ngModel)]="sub.nome" [disabled]="opzione.salvata">
+                <select class="form-select form-select-sm" [(ngModel)]="sub.macronutriente" [disabled]="opzione.salvata">
                   <option value="" disabled>Macronutriente</option>
                   <option value="carboidrati">Carboidrati</option>
                   <option value="grassi">Grassi</option>
                   <option value="proteine">Proteine</option>
                 </select>
                 <input type="number" class="form-control form-control-sm" placeholder="Grammi" min="0" step="0.01"
-                  [(ngModel)]="sub.grammi" />
+                       [(ngModel)]="sub.grammi" [disabled]="opzione.salvata">
                 <button class="btn btn-sm btn-outline-danger"
-                  (click)="rimuoviSubAlimento(tipo, i, j, k)">&times;</button>
+                        (click)="rimuoviSubAlimento(tipo, i, j, k)"
+                        [disabled]="opzione.salvata">
+                  &times;
+                </button>
               </div>
             </div>
-            <button class="btn btn-sm btn-success mt-2" (click)="aggiungiSubAlimento(tipo, i, j)">+ Aggiungi
-              Sub-Alimento</button>
+            <button *ngIf="!opzione.salvata" class="btn btn-sm btn-success mt-2"
+                    (click)="aggiungiSubAlimento(tipo, i, j)">
+              + Aggiungi Sub-Alimento
+            </button>
           </div>
         </div>
-        <button class="btn btn-sm btn-success mt-2" (click)="aggiungiAlimento(tipo, i)">+ Aggiungi Alimento</button>
 
-        <button class="btn btn-sm btn-primary mt-2" (click)="salvaSingoloPasto(tipo)">Salva Pasto</button>
-
-
-
+        <button *ngIf="!opzione.salvata" class="btn btn-sm btn-success mt-2"
+                (click)="aggiungiAlimento(tipo, i)">
+          + Aggiungi Alimento
+        </button>
+        <button *ngIf="!opzione.salvata" class="btn btn-sm btn-primary mt-2"
+                (click)="salvaSingoloPasto(tipo)">
+          Salva Opzione
+        </button>
       </div>
     </div>
-
     <ng-template #nessunaOpzione>
       <p class="text-muted fst-italic">Nessuna opzione inserita per questo pasto.</p>
     </ng-template>
@@ -81,3 +105,23 @@
   <div *ngIf="message" class="text-success mt-3 fw-semibold">{{ message }}</div>
   <div *ngIf="error" class="text-danger mt-3 fw-semibold">{{ error }}</div>
 </div>
+
+<!-- MODALE di conferma eliminazione -->
+<div class="modal fade" id="confermaEliminazioneModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="modalLabel">Conferma eliminazione</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        Sei sicuro di voler eliminare questa opzione? Questa azione è irreversibile.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-danger" (click)="confermaEliminazione()">Elimina</button>
+      </div>
+    </div>
+  </div>
+</div>
+
