@@ -10,7 +10,15 @@
            [@fadeAnimation]
            class="mb-3 border rounded p-3 bg-light">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <strong>Opzione {{ i + 1 }}</strong>
+<input
+  *ngIf="!opzione.salvata"
+  class="form-control form-control-sm fw-bold"
+  style="width: 200px"
+  [(ngModel)]="opzione.nome"
+  placeholder="Nome opzione"
+/>
+
+<strong *ngIf="opzione.salvata">{{ opzione.nome || ('Opzione ' + (i + 1)) }}</strong>
           <button *ngIf="opzione.salvata"
                   class="btn btn-sm btn-danger"
                   (click)="confirmModal(tipo, opzione.id)">
@@ -98,9 +106,6 @@
     </ng-template>
   </div>
 
-  <button class="btn btn-primary w-100 mt-3" [disabled]="loading" (click)="salvaDettagli()">
-    {{ loading ? 'Salvataggio in corso...' : 'Salva Dettagli Pasti' }}
-  </button>
 
   <div *ngIf="message" class="text-success mt-3 fw-semibold">{{ message }}</div>
   <div *ngIf="error" class="text-danger mt-3 fw-semibold">{{ error }}</div>

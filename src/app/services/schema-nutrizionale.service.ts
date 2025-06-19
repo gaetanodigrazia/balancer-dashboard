@@ -18,6 +18,7 @@ export interface Opzione {
   id?: string;
   alimenti: Alimento[];
   salvata?: boolean;
+  nome?: string;
 }
 
 export interface DettagliPasto {
