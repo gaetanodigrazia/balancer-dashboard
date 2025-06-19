@@ -243,32 +243,26 @@ async def get_schema(schema_id: int):
         return data
 
 
-@router.delete("/opzione")
-async def elimina_opzione(
-    data: dict = Body(...)
-):
-    nome = data.get("nome")
-    tipo_pasto = data.get("tipoPasto")
-    opzione_id = data.get("opzioneId")
-
-    if not all([nome, tipo_pasto, opzione_id]):
-        raise HTTPException(status_code=400, detail="Dati incompleti")
-
+@router.delete("/{schema_id}/opzione/{tipo_pasto}/{opzione_id}/")
+async def elimina_opzione_per_id(schema_id: int, tipo_pasto: str, opzione_id: str):
     async with SessionLocal() as session:
-        existing = await session.execute(text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"), {"nome": nome})
-        row = existing.first()
-        if not row:
+        db_schema = await session.get(SchemaNutrizionale, schema_id)
+        if not db_schema:
             raise HTTPException(status_code=404, detail="Schema non trovato")
 
-        db_schema = await session.get(SchemaNutrizionale, row.id)
         dettagli_dict = json.loads(db_schema.dettagli or '{}')
 
         if tipo_pasto not in dettagli_dict:
             raise HTTPException(status_code=404, detail="Tipo pasto non trovato")
 
-        opzioni = dettagli_dict[tipo_pasto]["opzioni"]
-        dettagli_dict[tipo_pasto]["opzioni"] = [op for op in opzioni if op.get("id") != opzione_id]
+        opzioni = dettagli_dict[tipo_pasto].get("opzioni", [])
+        nuove_opzioni = [op for op in opzioni if op.get("id") != opzione_id]
 
+        if len(opzioni) == len(nuove_opzioni):
+            raise HTTPException(status_code=404, detail="Opzione non trovata")
+
+        dettagli_dict[tipo_pasto]["opzioni"] = nuove_opzioni
         db_schema.dettagli = json.dumps(dettagli_dict)
+
         await session.commit()
         return {"status": "ok", "message": "Opzione rimossa"}
