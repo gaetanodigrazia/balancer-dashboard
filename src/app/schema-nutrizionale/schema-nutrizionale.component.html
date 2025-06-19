@@ -52,8 +52,10 @@
   <app-gestione-schema
     [schema]="schemaSelezionato"
     (schemaAggiornato)="onSchemaAggiornato($event)"
+    (schemaEliminato)="onSchemaEliminato()"
   ></app-gestione-schema>
 </div>
+
 
 <div *ngIf="tab === 'gestione-pasti' && schemaSelezionato">
   <app-gestione-pasti

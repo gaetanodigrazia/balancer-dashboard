@@ -33,4 +33,9 @@ changeTab(tabName: typeof this.tab) {
 }
 
 
+onSchemaEliminato() {
+  this.schemaSelezionato = null;
+  this.tab = 'riepilogo';
+}
+
 }

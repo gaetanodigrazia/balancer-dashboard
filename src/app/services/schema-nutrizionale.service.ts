@@ -37,12 +37,12 @@ export interface SchemaBrief {
 export class SchemaNutrizionaleService {
   private baseUrl = '/schemi-nutrizionali';
 
-  constructor(private http: HttpClient) {}
-schemiDisponibili: SchemaBrief[] = [];
+  constructor(private http: HttpClient) { }
+  schemiDisponibili: SchemaBrief[] = [];
 
-getSchemiDisponibili(): Observable<SchemaBrief[]> {
-  return this.http.get<SchemaBrief[]>(`${this.baseUrl}`);
-}
+  getSchemiDisponibili(): Observable<SchemaBrief[]> {
+    return this.http.get<SchemaBrief[]>(`${this.baseUrl}`);
+  }
 
 
   // Salva dati generali di uno schema
@@ -57,16 +57,23 @@ getSchemiDisponibili(): Observable<SchemaBrief[]> {
     return this.http.post(`${this.baseUrl}/dati-generali`, payload);
   }
 
-salvaOpzioniPasti(payload: {
+  salvaOpzioniPasti(payload: {
+    nome: string;
+    tipoSchema: number;
+    dettagli: { [tipoPasto: string]: DettagliPasto };
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/dinamico/completo`, payload);
+  }
+  eliminaSchema(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${id}`);
+  }
+salvaDettagliSingoloPasto(payload: {
   nome: string;
   tipoSchema: number;
-  dettagli: { [tipoPasto: string]: DettagliPasto };
+  tipoPasto: string;
+  dettagli: DettagliPasto;
 }): Observable<any> {
-  return this.http.post(`${this.baseUrl}/dinamico/completo`, payload);
+  return this.http.post(`${this.baseUrl}/dinamico/pasto`, payload);
 }
-eliminaSchema(id: number): Observable<any> {
-  return this.http.delete(`${this.baseUrl}/${id}`);
-}
-
 
 }

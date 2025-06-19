@@ -1,5 +1,7 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Router } from '@angular/router';
 import { SchemaNutrizionaleService, SchemaBrief } from '../services/schema-nutrizionale.service';
+import { EventEmitter } from '@angular/core';
 
 @Component({
   selector: 'app-gestione-schema',
@@ -14,6 +16,7 @@ export class GestioneSchemaComponent implements OnChanges {
     proteine: number;
     acqua: number;
   } | null = null;
+  @Output() schemaEliminato = new EventEmitter<void>();
 
   nome: string = '';
   calorie: number | null = null;
@@ -26,7 +29,10 @@ export class GestioneSchemaComponent implements OnChanges {
   message: string | null = null;
   error: string | null = null;
 
-  constructor(private schemaService: SchemaNutrizionaleService) {}
+  constructor(
+    private schemaService: SchemaNutrizionaleService,
+    private router: Router
+  ) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.schema && this.schema) {
@@ -77,31 +83,32 @@ export class GestioneSchemaComponent implements OnChanges {
   }
 
   eliminaSchema() {
-  if (!confirm('Sei sicuro di voler eliminare questo schema?')) {
-    return;
-  }
-
-  if (!this.schema || !this.schema.id) {
-    this.error = 'ID schema non disponibile.';
-    return;
-  }
-
-  this.loading = true;
-  this.message = null;
-  this.error = null;
-
-  this.schemaService.eliminaSchema(this.schema.id).subscribe({
-    next: () => {
-      this.loading = false;
-      this.message = 'Schema eliminato con successo.';
-      // Qui puoi fare reset o navigare altrove
-    },
-    error: (err) => {
-      this.loading = false;
-      this.error = err.error?.detail || "Errore durante l'eliminazione dello schema.";
+    if (!confirm('Sei sicuro di voler eliminare questo schema?')) {
+      return;
     }
-  });
-}
 
+    if (!this.schema || !this.schema.id) {
+      this.error = 'ID schema non disponibile.';
+      return;
+    }
 
+    this.loading = true;
+    this.message = null;
+    this.error = null;
+
+this.schemaService.eliminaSchema(this.schema.id).subscribe({
+  next: () => {
+    this.loading = false;
+    this.message = 'Schema eliminato con successo.';
+
+    // Comunica al componente padre che lo schema è stato eliminato
+    this.schemaEliminato.emit();
+  },
+  error: (err) => {
+    this.loading = false;
+    this.error = err.error?.detail || "Errore durante l'eliminazione dello schema.";
+  }
+});
+
+  }
 }

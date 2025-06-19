@@ -23,7 +23,10 @@ export class RiepilogoSchemiComponent implements OnInit {
 
   caricaSchemi() {
     this.schemaService.getSchemiDisponibili().subscribe({
-      next: (data) => this.schemi = data,
+  next: (data) => {
+    console.log('Schemi ricevuti dal backend:', data);
+    this.schemi = data;
+  },
       error: (err) => {
         console.error('Errore nel caricamento degli schemi:', err);
         this.schemi = [];
@@ -76,11 +79,14 @@ modificaPasti(schema: SchemaBrief) {
     y += lineHeight;
 
     // Se vuoi puoi aggiungere anche i dettagli (pasti, alimenti ecc)
+    console.log('Dettagli schema:', schema.dettagli);
+
     if (schema.dettagli) {
       y += lineHeight;
       doc.setFontSize(13);
       doc.text('Dettagli Pasti:', 10, y);
       y += lineHeight;
+console.log('Dettagli schema:', schema.dettagli);
 
       for (const tipoPasto in schema.dettagli) {
         if (schema.dettagli.hasOwnProperty(tipoPasto)) {
@@ -89,9 +95,12 @@ modificaPasti(schema: SchemaBrief) {
           y += lineHeight;
 
           const dettagliPasto = schema.dettagli[tipoPasto];
+console.log('Dettagli schema:', schema.dettagli);
 
           // assumo dettagliPasto.opzioni è array di array di alimenti (Opzione[])
           dettagliPasto.opzioni.forEach((opzione: any[], idx: number) => {
+            console.log('Dettagli schema:', schema.dettagli);
+
             doc.text(`  Opzione ${idx + 1}:`, 12, y);
             y += lineHeight;
 

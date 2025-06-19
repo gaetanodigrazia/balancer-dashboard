@@ -18,49 +18,49 @@ export class GestionePastiComponent implements OnInit {
     'cena'
   ];
 
-dettagliPasti: { [tipoPasto: string]: DettagliPasto } = {};
+  dettagliPasti: { [tipoPasto: string]: DettagliPasto } = {};
 
   loading = false;
   message: string | null = null;
   error: string | null = null;
 
-  constructor(private schemaService: SchemaNutrizionaleService) {}
+  constructor(private schemaService: SchemaNutrizionaleService) { }
 
-ngOnInit() {
-  this.dettagliPasti = this.schema.dettagli || {};
-  this.tipiPasto.forEach(tp => {
-    if (!this.dettagliPasti[tp]) {
-      this.dettagliPasti[tp] = { opzioni: [] };
-    }
-  });
-}
+  ngOnInit() {
+    this.dettagliPasti = this.schema.dettagli || {};
+    this.tipiPasto.forEach(tp => {
+      if (!this.dettagliPasti[tp]) {
+        this.dettagliPasti[tp] = { opzioni: [] };
+      }
+    });
+  }
 
 
   nuovoAlimento(): Alimento {
     return { nome: '', macronutriente: '', grammi: null };
   }
 
-aggiungiOpzione(tipoPasto: string) {
-  if (!this.dettagliPasti[tipoPasto]) {
-    this.dettagliPasti[tipoPasto] = { opzioni: [] };
+  aggiungiOpzione(tipoPasto: string) {
+    if (!this.dettagliPasti[tipoPasto]) {
+      this.dettagliPasti[tipoPasto] = { opzioni: [] };
+    }
+    this.dettagliPasti[tipoPasto].opzioni.push([this.nuovoAlimento()]);
   }
-  this.dettagliPasti[tipoPasto].opzioni.push([this.nuovoAlimento()]);
-}
 
-rimuoviOpzione(tipoPasto: string, index: number) {
-  this.dettagliPasti[tipoPasto].opzioni.splice(index, 1);
-}
+  rimuoviOpzione(tipoPasto: string, index: number) {
+    this.dettagliPasti[tipoPasto].opzioni.splice(index, 1);
+  }
 
-aggiungiAlimento(tipoPasto: string, opzioneIndex: number) {
-  this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].push(this.nuovoAlimento());
-}
+  aggiungiAlimento(tipoPasto: string, opzioneIndex: number) {
+    this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].push(this.nuovoAlimento());
+  }
 
-rimuoviAlimento(tipoPasto: string, opzioneIndex: number, alimentoIndex: number) {
-  this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].splice(alimentoIndex, 1);
-}
+  rimuoviAlimento(tipoPasto: string, opzioneIndex: number, alimentoIndex: number) {
+    this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].splice(alimentoIndex, 1);
+  }
 
   macronutrienteChanged(tipoPasto: string, opzioneIndex: number, alimentoIndex: number) {
-  const alimento = this.dettagliPasti[tipoPasto].opzioni[opzioneIndex][alimentoIndex];
+    const alimento = this.dettagliPasti[tipoPasto].opzioni[opzioneIndex][alimentoIndex];
     if (alimento.macronutriente === 'gruppo') {
       if (!alimento.gruppoAlimenti || alimento.gruppoAlimenti.length === 0) {
         alimento.gruppoAlimenti = [this.nuovoAlimento()];
@@ -73,7 +73,11 @@ rimuoviAlimento(tipoPasto: string, opzioneIndex: number, alimentoIndex: number) 
   }
 
   aggiungiSubAlimento(tipoPasto: string, opzioneIndex: number, alimentoIndex: number) {
-    const alimento = this.dettagliPasti[tipoPasto][opzioneIndex][alimentoIndex];
+    const alimento = this.dettagliPasti[tipoPasto].opzioni[opzioneIndex][alimentoIndex];
+    if (!alimento) {
+      console.warn('Alimento non trovato', tipoPasto, opzioneIndex, alimentoIndex);
+      return;
+    }
     if (!alimento.gruppoAlimenti) {
       alimento.gruppoAlimenti = [];
     }
@@ -81,7 +85,7 @@ rimuoviAlimento(tipoPasto: string, opzioneIndex: number, alimentoIndex: number) 
   }
 
   rimuoviSubAlimento(tipoPasto: string, opzioneIndex: number, alimentoIndex: number, subIndex: number) {
-    const alimento = this.dettagliPasti[tipoPasto][opzioneIndex][alimentoIndex];
+    const alimento = this.dettagliPasti[tipoPasto].opzioni[opzioneIndex][alimentoIndex];
     if (!alimento.gruppoAlimenti) return;
     alimento.gruppoAlimenti.splice(subIndex, 1);
     if (alimento.gruppoAlimenti.length === 0) {
@@ -114,7 +118,34 @@ rimuoviAlimento(tipoPasto: string, opzioneIndex: number, alimentoIndex: number) 
     });
   }
 
+  // NUOVA funzione per salvare solo un singolo pasto completo (tutte le opzioni di quel tipo)
+  salvaSingoloPasto(tipoPasto: string) {
+    if (!this.schema) return;
+
+    this.loading = true;
+    this.message = null;
+    this.error = null;
+
+    const payload = {
+      nome: this.schema.nome,
+      tipoSchema: this.schema.id,
+      tipoPasto: tipoPasto,
+      dettagli: this.dettagliPasti[tipoPasto]  // Solo il pasto selezionato
+    };
+
+    this.schemaService.salvaDettagliSingoloPasto(payload).subscribe({
+      next: () => {
+        this.loading = false;
+        this.message = `Dettagli per '${this.formatTipoPasto(tipoPasto)}' salvati con successo!`;
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = err.error?.detail || `Errore nel salvataggio del pasto '${tipoPasto}'.`;
+      }
+    });
+  }
+
   formatTipoPasto(tipo: string): string {
-  return tipo.replace(/_/g, ' ');
-}
+    return tipo.replace(/_/g, ' ');
+  }
 }
