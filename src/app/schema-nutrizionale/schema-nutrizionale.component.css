@@ -1,0 +1,200 @@
+/* Rimuove il box/card dal form dentro la card principale */
+.card > form {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  font-family: inherit;
+}
+
+/* Mantieni padding e stile nella card stessa */
+.card {
+  padding: 25px 30px;
+  background: #fafafa;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Resto del CSS ottimizzato per form e bottoni */
+label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 6px;
+  color: #333;
+  font-size: 15px;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.8px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background-color: white;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 6px rgba(0, 123, 255, 0.4);
+}
+
+/* Pulsanti */
+.btn {
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  font-family: inherit;
+  display: inline-block;
+  user-select: none;
+  font-size: 14px;
+  padding: 8px 18px;
+}
+
+/* Submit */
+.btn-submit {
+  background-color: #007bff;
+  color: white;
+  padding: 14px 32px;
+  font-size: 16px;
+  margin-top: 30px;
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 3px 8px rgba(0, 123, 255, 0.6);
+}
+
+.btn-submit:hover:not(:disabled) {
+  background-color: #0056b3;
+  box-shadow: 0 0 12px rgba(0, 86, 179, 0.8);
+}
+
+.btn-submit:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Pulsanti aggiungi/rimuovi */
+.btn-add-option,
+.btn-add-alimento {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-add-option:hover,
+.btn-add-alimento:hover {
+  background-color: #1e7e34;
+  box-shadow: 0 0 8px rgba(30, 126, 52, 0.7);
+}
+
+.btn-remove-option,
+.btn-remove-alimento {
+  background-color: #dc3545;
+  color: white;
+  font-size: 13px;
+  padding: 6px 12px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  user-select: none;
+}
+
+.btn-remove-option:hover,
+.btn-remove-alimento:hover {
+  background-color: #a71d2a;
+  box-shadow: 0 0 8px rgba(167, 29, 42, 0.7);
+}
+
+/* Layout */
+.opzione-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.opzione-container {
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  padding: 18px 22px;
+  margin: 16px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.alimento-row {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.alimento-row input[type="text"] {
+  flex: 3 1 200px;
+}
+
+.alimento-row select {
+  flex: 1.5 1 150px;
+}
+
+.alimento-row input[type="number"] {
+  flex: 1 1 120px;
+}
+
+.alimento-row .btn-remove-alimento {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  height: 36px;
+  line-height: 1;
+}
+
+/* Messaggi e loading */
+.loading-text {
+  font-style: italic;
+  margin-top: 20px;
+  color: #666;
+  text-align: center;
+}
+
+.message-success {
+  color: #28a745;
+  margin-top: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.message-error {
+  color: #dc3545;
+  margin-top: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .alimento-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .alimento-row input,
+  .alimento-row select,
+  .alimento-row .btn-remove-alimento {
+    margin-right: 0 !important;
+    margin-bottom: 8px;
+    flex: none !important;
+    width: 100%;
+  }
+
+  .alimento-row .btn-remove-alimento {
+    height: auto;
+  }
+}

@@ -1,20 +1,9 @@
-import { Component } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
+import { SchemaNutrizionaleService, Alimento, Opzione } from '../services/schema-nutrizionale.service';
 
-interface Alimento {
+interface SchemaBrief {
+  id: number;
   nome: string;
-  grammi: number | null;
-}
-
-type Opzione = Alimento[];
-
-interface Dettagli {
-  colazione: Opzione[];
-  spuntino_1: Opzione[];
-  pranzo: Opzione[];
-  spuntino_2: Opzione[];
-  pre_intra_post_workout: Opzione[];
-  cena: Opzione[];
 }
 
 @Component({
@@ -22,81 +11,118 @@ interface Dettagli {
   templateUrl: './schema-nutrizionale.component.html',
   styleUrls: ['./schema-nutrizionale.component.css']
 })
-export class SchemaNutrizionaleComponent {
+export class SchemaNutrizionaleComponent implements OnInit {
   nome = '';
+  tipoSchemaSelezionato: number | null = null;  // Ora è ID, non stringa
+  tipoPastoSelezionato: string | null = null;
+
+  schemiDisponibili: SchemaBrief[] = [];
+
+  tipiPasto: string[] = [
+    'colazione',
+    'spuntino_1',
+    'pranzo',
+    'spuntino_2',
+    'pre_intra_post_workout',
+    'cena'
+  ];
+
   calorie: number | null = null;
   carboidrati: number | null = null;
   grassi: number | null = null;
   proteine: number | null = null;
   acqua: number | null = null;
 
-  dettagli: Dettagli = {
-    colazione: [ [this.nuovoAlimento()] ],
-    spuntino_1: [ [this.nuovoAlimento()] ],
-    pranzo: [ [this.nuovoAlimento()] ],
-    spuntino_2: [ [this.nuovoAlimento()] ],
-    pre_intra_post_workout: [ [this.nuovoAlimento()] ],
-    cena: [ [this.nuovoAlimento()] ],
-  };
+  opzioniDinamiche: Opzione[] = [];
 
-  loading = false;
-  message: string | null = null;
-  error: string | null = null;
+  loadingDatiGenerali = false;
+  messageDatiGenerali: string | null = null;
+  errorDatiGenerali: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  loadingSchemaCompleto = false;
+  messageSchemaCompleto: string | null = null;
+  errorSchemaCompleto: string | null = null;
+
+  constructor(private schemaService: SchemaNutrizionaleService) {}
+
+  ngOnInit() {
+    this.caricaSchemi();
+  }
+
+  caricaSchemi() {
+    this.schemaService.getSchemiDisponibili().subscribe({
+      next: (data) => this.schemiDisponibili = data,
+      error: () => this.schemiDisponibili = []
+    });
+  }
 
   nuovoAlimento(): Alimento {
-    return { nome: '', grammi: null };
+    return { nome: '', macronutriente: '', grammi: null };
   }
 
-  // Aggiungi opzione nuova per un pasto
-  aggiungiOpzione(pasto: keyof Dettagli) {
-    this.dettagli[pasto].push([this.nuovoAlimento()]);
+  aggiungiOpzioneDinamica() {
+    this.opzioniDinamiche.push([this.nuovoAlimento()]);
   }
 
-  // Rimuovi opzione intera da un pasto
-  rimuoviOpzione(pasto: keyof Dettagli, index: number) {
-    this.dettagli[pasto].splice(index, 1);
+  rimuoviOpzioneDinamica(index: number) {
+    this.opzioniDinamiche.splice(index, 1);
   }
 
-  // Aggiungi alimento a un'opzione
-  aggiungiAlimento(pasto: keyof Dettagli, opzioneIndex: number) {
-    this.dettagli[pasto][opzioneIndex].push(this.nuovoAlimento());
+  aggiungiAlimentoDinamico(opzioneIndex: number) {
+    this.opzioniDinamiche[opzioneIndex].push(this.nuovoAlimento());
   }
 
-  // Rimuovi alimento da un'opzione
-  rimuoviAlimento(pasto: keyof Dettagli, opzioneIndex: number, alimentoIndex: number) {
-    this.dettagli[pasto][opzioneIndex].splice(alimentoIndex, 1);
+  rimuoviAlimentoDinamico(opzioneIndex: number, alimentoIndex: number) {
+    this.opzioniDinamiche[opzioneIndex].splice(alimentoIndex, 1);
   }
 
-  inviaSchema() {
-    if (!this.nome.trim() || this.calorie === null || this.carboidrati === null || this.grassi === null || this.proteine === null || this.acqua === null) {
-      this.error = "Compila tutti i campi generali.";
-      this.message = null;
+  macronutrienteChanged(opzioneIndex: number, alimentoIndex: number) {
+    const alimento = this.opzioniDinamiche[opzioneIndex][alimentoIndex];
+    if (alimento.macronutriente === 'gruppo') {
+      if (!alimento.gruppoAlimenti || alimento.gruppoAlimenti.length === 0) {
+        alimento.gruppoAlimenti = [this.nuovoAlimento()];
+      }
+      alimento.nome = '';
+      alimento.grammi = null;
+    } else {
+      alimento.gruppoAlimenti = undefined;
+    }
+  }
+
+  aggiungiSubAlimento(opzioneIndex: number, alimentoIndex: number) {
+    const alimento = this.opzioniDinamiche[opzioneIndex][alimentoIndex];
+    if (!alimento.gruppoAlimenti) {
+      alimento.gruppoAlimenti = [];
+    }
+    alimento.gruppoAlimenti.push(this.nuovoAlimento());
+  }
+
+  rimuoviSubAlimento(opzioneIndex: number, alimentoIndex: number, subAlimentoIndex: number) {
+    const alimento = this.opzioniDinamiche[opzioneIndex][alimentoIndex];
+    if (!alimento.gruppoAlimenti) return;
+    alimento.gruppoAlimenti.splice(subAlimentoIndex, 1);
+    if (alimento.gruppoAlimenti.length === 0) {
+      alimento.macronutriente = '';
+    }
+  }
+
+  inviaDatiGenerali() {
+    this.loadingDatiGenerali = true;
+    this.messageDatiGenerali = null;
+    this.errorDatiGenerali = null;
+
+    if (
+      !this.nome.trim() ||
+      this.calorie === null ||
+      this.carboidrati === null ||
+      this.grassi === null ||
+      this.proteine === null ||
+      this.acqua === null
+    ) {
+      this.errorDatiGenerali = 'Compila tutti i campi generali.';
+      this.loadingDatiGenerali = false;
       return;
     }
-
-    // Validazione base: almeno un alimento per ogni opzione
-    for (const pasto of Object.keys(this.dettagli) as (keyof Dettagli)[]) {
-      for (const opzione of this.dettagli[pasto]) {
-        if (opzione.length === 0) {
-          this.error = `Almeno un alimento richiesto in ogni opzione di ${pasto}`;
-          this.message = null;
-          return;
-        }
-        for (const alimento of opzione) {
-          if (!alimento.nome.trim() || alimento.grammi === null || alimento.grammi < 0) {
-            this.error = `Compila nome e grammi validi per tutti gli alimenti (pasto: ${pasto})`;
-            this.message = null;
-            return;
-          }
-        }
-      }
-    }
-
-    this.loading = true;
-    this.error = null;
-    this.message = null;
 
     const payload = {
       nome: this.nome.trim(),
@@ -105,37 +131,132 @@ export class SchemaNutrizionaleComponent {
       grassi: this.grassi,
       proteine: this.proteine,
       acqua: this.acqua,
-      dettagli: this.dettagli
     };
 
-    this.http.post('/schemi-nutrizionali', payload).subscribe({
+    this.schemaService.salvaDatiGenerali(payload).subscribe({
       next: () => {
-        this.loading = false;
-        this.message = "Schema nutrizionale salvato con successo!";
+        this.loadingDatiGenerali = false;
+        this.messageDatiGenerali = 'Dati generali salvati con successo!';
+      },
+      error: (err) => {
+        this.loadingDatiGenerali = false;
+        this.errorDatiGenerali = err.error?.detail || 'Errore nel salvataggio dati generali.';
+      }
+    });
+  }
+
+  inviaSchemaCompleto() {
+    this.loadingSchemaCompleto = true;
+    this.messageSchemaCompleto = null;
+    this.errorSchemaCompleto = null;
+
+    if (
+      !this.nome.trim() ||
+      this.calorie === null ||
+      this.carboidrati === null ||
+      this.grassi === null ||
+      this.proteine === null ||
+      this.acqua === null
+    ) {
+      this.errorSchemaCompleto = 'Compila tutti i campi generali.';
+      this.loadingSchemaCompleto = false;
+      return;
+    }
+
+    if (!this.tipoSchemaSelezionato) {
+      this.errorSchemaCompleto = 'Seleziona il tipo di schema.';
+      this.loadingSchemaCompleto = false;
+      return;
+    }
+
+    if (!this.tipoPastoSelezionato) {
+      this.errorSchemaCompleto = 'Seleziona il tipo di pasto.';
+      this.loadingSchemaCompleto = false;
+      return;
+    }
+
+    if (this.opzioniDinamiche.length === 0) {
+      this.errorSchemaCompleto = 'Aggiungi almeno una opzione.';
+      this.loadingSchemaCompleto = false;
+      return;
+    }
+
+    for (const opzione of this.opzioniDinamiche) {
+      if (opzione.length === 0) {
+        this.errorSchemaCompleto = 'Ogni opzione deve avere almeno un alimento.';
+        this.loadingSchemaCompleto = false;
+        return;
+      }
+      for (const alimento of opzione) {
+        if (alimento.macronutriente === 'gruppo') {
+          if (!alimento.gruppoAlimenti || alimento.gruppoAlimenti.length === 0) {
+            this.errorSchemaCompleto = 'Almeno un alimento deve essere presente nel gruppo.';
+            this.loadingSchemaCompleto = false;
+            return;
+          }
+          for (const subAlimento of alimento.gruppoAlimenti) {
+            if (
+              !subAlimento.nome.trim() ||
+              subAlimento.macronutriente === '' ||
+              subAlimento.grammi === null ||
+              subAlimento.grammi < 0
+            ) {
+              this.errorSchemaCompleto = 'Compila tutti i dati degli alimenti nei gruppi correttamente.';
+              this.loadingSchemaCompleto = false;
+              return;
+            }
+          }
+        } else {
+          if (
+            !alimento.nome.trim() ||
+            alimento.macronutriente === '' ||
+            alimento.grammi === null ||
+            alimento.grammi < 0
+          ) {
+            this.errorSchemaCompleto = 'Compila tutti i dati degli alimenti correttamente.';
+            this.loadingSchemaCompleto = false;
+            return;
+          }
+        }
+      }
+    }
+
+    const payload = {
+      nome: this.nome.trim(),
+      tipoSchema: this.tipoSchemaSelezionato, // ora ID numerico
+      tipoPasto: this.tipoPastoSelezionato,
+      dettagli: this.opzioniDinamiche
+    };
+
+    this.schemaService.salvaOpzioniPasti(payload).subscribe({
+      next: () => {
+        this.loadingSchemaCompleto = false;
+        this.messageSchemaCompleto = 'Schema completo salvato con successo!';
         this.resetForm();
       },
       error: (err) => {
-        this.loading = false;
-        this.error = err.error?.detail || "Errore nel salvataggio.";
+        this.loadingSchemaCompleto = false;
+        this.errorSchemaCompleto = err.error?.detail || 'Errore nel salvataggio completo.';
       }
     });
   }
 
   resetForm() {
     this.nome = '';
+    this.tipoSchemaSelezionato = null;
+    this.tipoPastoSelezionato = null;
+    this.opzioniDinamiche = [];
     this.calorie = null;
     this.carboidrati = null;
     this.grassi = null;
     this.proteine = null;
     this.acqua = null;
 
-    this.dettagli = {
-      colazione: [ [this.nuovoAlimento()] ],
-      spuntino_1: [ [this.nuovoAlimento()] ],
-      pranzo: [ [this.nuovoAlimento()] ],
-      spuntino_2: [ [this.nuovoAlimento()] ],
-      pre_intra_post_workout: [ [this.nuovoAlimento()] ],
-      cena: [ [this.nuovoAlimento()] ],
-    };
+    this.loadingDatiGenerali = false;
+    this.messageDatiGenerali = null;
+    this.errorDatiGenerali = null;
+    this.loadingSchemaCompleto = false;
+    this.messageSchemaCompleto = null;
+    this.errorSchemaCompleto = null;
   }
 }

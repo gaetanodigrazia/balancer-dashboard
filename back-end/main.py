@@ -614,3 +614,91 @@ async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     return {"status": "ok", "message": "Tabelle create correttamente."}
+
+
+
+
+@app.post("/schemi-nutrizionali/dati-generali")
+async def salva_dati_generali(payload: dict = Body(...)):
+    """
+    Salva o aggiorna i dati generali di uno schema nutrizionale (calorie, macro, acqua)
+    """
+    nome = payload.get("nome")
+    calorie = payload.get("calorie")
+    carboidrati = payload.get("carboidrati")
+    grassi = payload.get("grassi")
+    proteine = payload.get("proteine")
+    acqua = payload.get("acqua")
+
+    if not all([nome, calorie, carboidrati, grassi, proteine, acqua]):
+        raise HTTPException(status_code=400, detail="Tutti i campi sono obbligatori")
+
+    async with SessionLocal() as session:
+        existing = await session.execute(
+            text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"),
+            {"nome": nome}
+        )
+        existing_row = existing.first()
+
+        if existing_row:
+            db_schema = await session.get(SchemaNutrizionale, existing_row.id)
+            db_schema.calorie = calorie
+            db_schema.carboidrati = carboidrati
+            db_schema.grassi = grassi
+            db_schema.proteine = proteine
+            db_schema.acqua = acqua
+            # Mantieni dettagli esistenti se presenti
+        else:
+            db_schema = SchemaNutrizionale(
+                nome=nome,
+                calorie=calorie,
+                carboidrati=carboidrati,
+                grassi=grassi,
+                proteine=proteine,
+                acqua=acqua,
+                dettagli="{}"
+            )
+            session.add(db_schema)
+
+        await session.commit()
+        await session.refresh(db_schema)
+
+    return {"status": "ok", "message": "Dati generali salvati con successo"}
+
+@app.post("/schemi-nutrizionali/dinamico/completo")
+async def salva_schema_completo(payload: dict = Body(...)):
+    """
+    Salva o aggiorna lo schema completo con dettagli dinamici (opzioni pasti)
+    """
+    nome = payload.get("nome")
+    tipo_schema = payload.get("tipoSchema")
+    tipo_pasto = payload.get("tipoPasto")
+    dettagli = payload.get("dettagli")
+
+    if not all([nome, tipo_schema, tipo_pasto, dettagli]):
+        raise HTTPException(status_code=400, detail="Tutti i campi sono obbligatori")
+
+    async with SessionLocal() as session:
+        existing = await session.execute(
+            text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"),
+            {"nome": nome}
+        )
+        existing_row = existing.first()
+
+        if not existing_row:
+            raise HTTPException(status_code=404, detail="Schema nutrizionale non trovato")
+
+        db_schema = await session.get(SchemaNutrizionale, existing_row.id)
+
+        # Carica dettagli esistenti
+        dettagli_dict = json.loads(db_schema.dettagli) if db_schema.dettagli else {}
+
+        # Aggiorna solo il pasto specificato
+        dettagli_dict[tipo_pasto] = dettagli
+
+        db_schema.dettagli = json.dumps(dettagli_dict)
+
+        await session.commit()
+        await session.refresh(db_schema)
+
+    return {"status": "ok", "message": "Schema completo salvato con successo"}
