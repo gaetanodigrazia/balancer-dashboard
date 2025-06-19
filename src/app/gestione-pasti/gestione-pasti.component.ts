@@ -184,50 +184,54 @@ export class GestionePastiComponent implements OnChanges {
     });
   }
 
+
   salvaSingoloPasto(tipoPasto: string) {
-    if (!this.schema) return;
+  if (!this.schema) return;
 
-    const opzioneIndex = this.dettagliPasti[tipoPasto].opzioni.findIndex(o => !o.salvata);
-    if (opzioneIndex === -1) {
-      this.error = 'Nessuna opzione da salvare.';
-      return;
-    }
-
-    const opzione = this.dettagliPasti[tipoPasto].opzioni[opzioneIndex];
-    const alimentiValidi = opzione.alimenti.filter(
-      a => a.nome?.trim() && a.macronutriente && (a.macronutriente === 'gruppo' || a.grammi)
-    );
-
-    if (alimentiValidi.length === 0) {
-      this.error = 'Alimenti non validi.';
-      return;
-    }
-
-    this.loading = true;
-    this.message = null;
-    this.error = null;
-
-    const payload = {
-      nome: this.schema.nome,
-      tipoSchema: this.schema.id,
-      tipoPasto: tipoPasto,
-      dettagli: {
-        opzioni: [{ ...opzione, alimenti: alimentiValidi }]
-      }
-    };
-
-    this.schemaService.salvaDettagliSingoloPasto(payload).subscribe({
-      next: () => {
-        this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].salvata = true;
-        this.loading = false;
-        this.message = `Opzione per '${this.formatTipoPasto(tipoPasto)}' salvata con successo!`;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.detail || `Errore nel salvataggio dell'opzione.`;
-      }
-    });
+  const opzioneIndex = this.dettagliPasti[tipoPasto].opzioni.findIndex(o => !o.salvata);
+  if (opzioneIndex === -1) {
+    this.error = 'Nessuna opzione da salvare.';
+    return;
   }
+
+  const opzione = this.dettagliPasti[tipoPasto].opzioni[opzioneIndex];
+  const alimentiValidi = opzione.alimenti.filter(
+    a => a.nome?.trim() && a.macronutriente && (a.macronutriente === 'gruppo' || a.grammi)
+  );
+
+  if (alimentiValidi.length === 0) {
+    this.error = 'Alimenti non validi.';
+    return;
+  }
+
+  this.loading = true;
+  this.message = null;
+  this.error = null;
+
+  const opzioniSalvate = this.dettagliPasti[tipoPasto].opzioni.filter(o => o.salvata);
+
+  const payload = {
+    nome: this.schema.nome,
+    tipoSchema: this.schema.id,
+    tipoPasto: tipoPasto,
+    dettagli: {
+      opzioni: [...opzioniSalvate, { ...opzione, alimenti: alimentiValidi }]
+    }
+  };
+
+  this.schemaService.salvaDettagliSingoloPasto(payload).subscribe({
+    next: () => {
+      this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].salvata = true;
+      this.loading = false;
+      this.message = `Opzione per '${this.formatTipoPasto(tipoPasto)}' salvata con successo!`;
+    },
+    error: (err) => {
+      this.loading = false;
+      this.error = err.error?.detail || `Errore nel salvataggio dell'opzione.`;
+    }
+  });
+}
+
 
   formatTipoPasto(tipo: string): string {
     return tipo.replace(/_/g, ' ');
