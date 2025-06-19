@@ -2,6 +2,9 @@ import { Component, EventEmitter, OnInit, Output } from '@angular/core';
 import { SchemaBrief } from '../services/schema-nutrizionale.service';
 import { SchemaNutrizionaleService } from '../services/schema-nutrizionale.service';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+
 
 @Component({
   selector: 'app-riepilogo-schemi',
@@ -69,84 +72,108 @@ export class RiepilogoSchemiComponent implements OnInit {
       }
     });
   }
-  private generaPdf(schema: any) {
-    const doc = new jsPDF();
-    const lineHeight = 8;
-    let y = 10;
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(16);
-    doc.text(`Schema Nutrizionale: ${schema.nome}`, 10, y);
-    y += lineHeight * 2;
 
-    doc.setFontSize(12);
-    doc.text(`Calorie: ${schema.calorie}`, 10, y); y += lineHeight;
-    doc.text(`Carboidrati: ${schema.carboidrati}g`, 10, y); y += lineHeight;
-    doc.text(`Grassi: ${schema.grassi}g`, 10, y); y += lineHeight;
-    doc.text(`Proteine: ${schema.proteine}g`, 10, y); y += lineHeight;
-    doc.text(`Acqua: ${schema.acqua}L`, 10, y); y += lineHeight * 2;
+private generaPdf(schema: any) {
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  let y = 40;
 
-    for (const tipoPasto in schema.dettagli) {
-      const dettagliPasto = schema.dettagli[tipoPasto];
-      if (!dettagliPasto.opzioni?.length) continue;
+  const paleBlue: [number, number, number] = [235, 245, 255];
 
-      doc.setFontSize(14);
-      doc.text(`Pasto: ${tipoPasto.replace(/_/g, ' ')}`, 10, y);
-      y += lineHeight;
+  const drawBackground = () => {
+    doc.setFillColor(...paleBlue);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+  };
 
-      // Intestazione tabella
-      doc.setFontSize(11);
-      doc.setTextColor(0);
-      doc.text('Opzione', 10, y);
-      doc.text('Alimento', 30, y);
-      doc.text('Macronutriente', 90, y);
-      doc.text('Grammi', 140, y);
-      doc.text('Gruppo', 170, y);
-      y += lineHeight;
+  // ❗Disegna lo sfondo solo qui (prima pagina)
+  drawBackground();
 
-      dettagliPasto.opzioni.forEach((opzione: any, idx: number) => {
-        const opzioneLabel = opzione.nome?.trim() || `Opzione ${idx + 1}`;
+  // Titolo
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(30);
+  doc.text(`Schema Nutrizionale – ${schema.nome}`, margin, y);
+  y += 30;
 
-        opzione.alimenti.forEach((alimento: any, alimentoIndex: number) => {
-          const label = alimentoIndex === 0 ? opzioneLabel : '';
+  // Dati generali
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  const infoFields = [
+    `Calorie: ${schema.calorie ?? '-'}`,
+    `Carboidrati: ${schema.carboidrati ?? '-'}g`,
+    `Grassi: ${schema.grassi ?? '-'}g`,
+    `Proteine: ${schema.proteine ?? '-'}g`,
+    `Acqua: ${schema.acqua ?? '-'}L`
+  ];
+  infoFields.forEach(line => {
+    doc.text(line, margin, y);
+    y += 18;
+  });
 
-          // Controllo se è gruppo
-          if (alimento.macronutriente === 'gruppo' && alimento.gruppoAlimenti?.length) {
-            alimento.gruppoAlimenti.forEach((sub: any) => {
-              doc.text(label, 10, y);
-              doc.text(`-> ${sub.nome}`, 30, y);
-              doc.text(sub.macronutriente, 90, y);
-              doc.text(`${sub.grammi ?? '-'}`, 140, y);
-              doc.text('Sì', 175, y);
-              y += lineHeight;
-            });
-          } else {
-            doc.text(label, 10, y);
-            doc.text(alimento.nome || '-', 30, y);
-            doc.text(alimento.macronutriente || '-', 90, y);
-            doc.text(`${alimento.grammi ?? '-'}`, 140, y);
-            doc.text('No', 175, y);
-            y += lineHeight;
-          }
+  y += 20;
 
-          // Salto pagina
-          if (y > 270) {
-            doc.addPage();
-            y = 10;
-          }
-        });
+  // Tabelle per pasto
+  Object.entries(schema.dettagli ?? {}).forEach(([pasto, detRaw]) => {
+    const det = detRaw as { opzioni: any[] };
+    if (!det.opzioni?.length) return;
 
-        // Linea divisoria tra opzioni
-        doc.setDrawColor(150);
-        doc.line(10, y - 2, 200, y - 2);
-        y += lineHeight / 2;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(0, 80, 160);
+    doc.text(pasto.replace(/_/g, ' ').toUpperCase(), margin, y);
+    y += 24;
+
+    const body = det.opzioni.flatMap((opz: any, idx: number) => {
+      const label = opz.nome || `Opzione ${idx + 1}`;
+      return opz.alimenti.map((al: any, ai: number) => {
+        const isGroup = al.macronutriente === 'gruppo';
+        const name = ai === 0 ? label : '';
+        return [
+          name,
+          al.nome ?? '-',
+          al.macronutriente ?? '-',
+          al.grammi ?? '-',
+          isGroup ? 'Sì' : 'No'
+        ];
       });
+    });
 
-      y += lineHeight;
-    }
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      head: [['Opzione', 'Alimento', 'Macronutriente', 'Grammi', 'Gruppo']],
+      body,
+      theme: 'grid',
+      styles: {
+        font: 'helvetica',
+        fontSize: 10,
+        cellPadding: 6,
+        textColor: 50
+      },
+      headStyles: {
+        fillColor: [60, 120, 180],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 250, 255]
+      },
+      // Sfondo SOLO nelle pagine successive
+      didDrawPage: (data) => {
+        if (data.pageNumber > 1) {
+          drawBackground();
+        }
+      }
+    });
 
-    doc.save(`${schema.nome.replace(/\s+/g, '_').toLowerCase()}_schema.pdf`);
-  }
+    y = (doc as any).lastAutoTable.finalY + 30;
+  });
+
+  doc.save(`${schema.nome.replace(/\s+/g, '_').toLowerCase()}_schema.pdf`);
+}
 
 
 

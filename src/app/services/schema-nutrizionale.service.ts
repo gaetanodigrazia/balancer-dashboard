@@ -19,6 +19,8 @@ export interface Opzione {
   alimenti: Alimento[];
   salvata?: boolean;
   nome?: string;
+  inModifica?: boolean;
+
 }
 
 export interface DettagliPasto {

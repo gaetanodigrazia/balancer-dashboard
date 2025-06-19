@@ -30,12 +30,8 @@ export class GestionePastiComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['schemaId']) {
-      console.log('📦 schemaId ricevuto in GestionePastiComponent:', this.schemaId);
-
       if (this.schemaId) {
         this.caricaSchema();
-      } else {
-        console.warn('⚠️ schemaId non definito, impossibile caricare lo schema.');
       }
     }
   }
@@ -44,26 +40,25 @@ export class GestionePastiComponent implements OnChanges {
     this.loading = true;
     this.schemaService.getSchemaById(this.schemaId).subscribe({
       next: (data) => {
-              console.log('📄 Schema ricevuto dal backend:', data); // 👈 Log importante
-
         this.schema = data;
         this.dettagliPasti = {};
 
         this.tipiPasto.forEach(tp => {
           const pasto = this.schema.dettagli?.[tp];
           if (pasto && pasto.opzioni?.length > 0) {
-            pasto.opzioni.forEach(op => op.salvata = true);
+            pasto.opzioni.forEach(op => {
+              op.salvata = true;
+              op.inModifica = false;  // stato modifica aggiunto qui
+            });
             this.dettagliPasti[tp] = pasto;
           } else {
             this.dettagliPasti[tp] = { opzioni: [] };
           }
         });
 
-        console.log('✅ Schema caricato:', this.schema);
         this.loading = false;
       },
       error: (err) => {
-        console.error('Errore durante il caricamento dello schema:', err);
         this.loading = false;
         this.error = err.error?.detail || 'Errore nel caricamento dello schema.';
       }
@@ -78,13 +73,23 @@ export class GestionePastiComponent implements OnChanges {
     const nuovaOpzione: Opzione = {
       id: crypto.randomUUID(),
       alimenti: [this.nuovoAlimento()],
-      salvata: false
+      salvata: false,
+      inModifica: true
     };
     this.dettagliPasti[tipoPasto].opzioni.push(nuovaOpzione);
   }
 
   rimuoviOpzione(tipoPasto: string, index: number) {
     this.dettagliPasti[tipoPasto].opzioni.splice(index, 1);
+  }
+
+  modificaOpzione(tipoPasto: string, opzione: Opzione) {
+    opzione.inModifica = true;
+  }
+
+  salvaModificaOpzione(tipoPasto: string, opzione: Opzione) {
+    // eventualmente aggiungi validazioni o chiamate API
+    opzione.inModifica = false;
   }
 
   confirmModal(tipoPasto: string, opzioneId: string) {
@@ -184,11 +189,10 @@ export class GestionePastiComponent implements OnChanges {
     });
   }
 
-
   salvaSingoloPasto(tipoPasto: string) {
   if (!this.schema) return;
 
-  const opzioneIndex = this.dettagliPasti[tipoPasto].opzioni.findIndex(o => !o.salvata);
+  const opzioneIndex = this.dettagliPasti[tipoPasto].opzioni.findIndex(o => !o.salvata || o.inModifica);
   if (opzioneIndex === -1) {
     this.error = 'Nessuna opzione da salvare.';
     return;
@@ -208,7 +212,7 @@ export class GestionePastiComponent implements OnChanges {
   this.message = null;
   this.error = null;
 
-  const opzioniSalvate = this.dettagliPasti[tipoPasto].opzioni.filter(o => o.salvata);
+  const opzioniSalvate = this.dettagliPasti[tipoPasto].opzioni.filter(o => o.salvata && o !== opzione);
 
   const payload = {
     nome: this.schema.nome,
@@ -222,6 +226,7 @@ export class GestionePastiComponent implements OnChanges {
   this.schemaService.salvaDettagliSingoloPasto(payload).subscribe({
     next: () => {
       this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].salvata = true;
+      this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].inModifica = false;  // blocca modifica qui!
       this.loading = false;
       this.message = `Opzione per '${this.formatTipoPasto(tipoPasto)}' salvata con successo!`;
     },
@@ -233,7 +238,14 @@ export class GestionePastiComponent implements OnChanges {
 }
 
 
+
+
   formatTipoPasto(tipo: string): string {
     return tipo.replace(/_/g, ' ');
   }
+  annullaModificaOpzione(tipoPasto: string, opzione: Opzione) {
+  opzione.inModifica = false;
+  // Se vuoi puoi anche resettare il nome o altre modifiche temporanee
+}
+
 }
