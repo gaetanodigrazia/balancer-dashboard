@@ -90,16 +90,41 @@
     </button>
 
     <!-- Pulsante elimina -->
-    <button
-      type="button"
-      class="btn btn-danger w-100 mt-3"
-      (click)="eliminaSchema()"
-      [disabled]="loading"
-    >
-      Elimina Schema
-    </button>
+<button
+  type="button"
+  class="btn btn-danger w-100 mt-3"
+  data-bs-toggle="modal"
+  data-bs-target="#confermaEliminazioneModal"
+  [disabled]="loading"
+>
+  Elimina Schema
+</button>
+
+
 
     <div *ngIf="message" class="text-success mt-3 fw-semibold">{{ message }}</div>
     <div *ngIf="error" class="text-danger mt-3 fw-semibold">{{ error }}</div>
   </form>
+</div>
+
+
+
+
+<!-- Modale di conferma eliminazione -->
+<div class="modal fade" id="confermaEliminazioneModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="modalLabel">Conferma eliminazione</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        Sei sicuro di voler eliminare questo schema? Questa azione è irreversibile.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-danger" (click)="confermaEliminazione()">Elimina</button>
+      </div>
+    </div>
+  </div>
 </div>

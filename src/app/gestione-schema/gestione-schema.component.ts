@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, Output, SimpleChanges } from '@angular/cor
 import { Router } from '@angular/router';
 import { SchemaNutrizionaleService, SchemaBrief } from '../services/schema-nutrizionale.service';
 import { EventEmitter } from '@angular/core';
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-gestione-schema',
@@ -111,4 +112,33 @@ this.schemaService.eliminaSchema(this.schema.id).subscribe({
 });
 
   }
+
+  confermaEliminazione() {
+  if (!this.schema || !this.schema.id) {
+    this.error = 'ID schema non disponibile.';
+    return;
+  }
+
+  this.loading = true;
+  this.message = null;
+  this.error = null;
+
+  this.schemaService.eliminaSchema(this.schema.id).subscribe({
+    next: () => {
+      this.loading = false;
+      this.message = 'Schema eliminato con successo.';
+      this.schemaEliminato.emit();
+
+      // Chiudi manualmente la modale
+      const modalElement = document.getElementById('confermaEliminazioneModal');
+      const modal = bootstrap.Modal.getInstance(modalElement!);
+      modal?.hide();
+    },
+    error: (err) => {
+      this.loading = false;
+      this.error = err.error?.detail || "Errore durante l'eliminazione dello schema.";
+    }
+  });
+}
+
 }
