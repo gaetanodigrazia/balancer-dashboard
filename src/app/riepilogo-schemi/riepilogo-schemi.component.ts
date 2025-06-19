@@ -46,10 +46,18 @@ modificaSchema(schema: SchemaBrief) {
 }
 
 modificaPasti(schema: SchemaBrief) {
-  this.selectedSchema = schema;
-  this.selezionaSchema.emit(schema);
-  this.cambiaTab.emit('gestione-pasti');
+  this.schemaService.getSchemaById(schema.id).subscribe({
+    next: (detailedSchema) => {
+      this.selectedSchema = detailedSchema;
+      this.selezionaSchema.emit(detailedSchema);
+      this.cambiaTab.emit('gestione-pasti');
+    },
+    error: (err) => {
+      console.error('Errore nel caricamento dettagli schema:', err);
+    }
+  });
 }
+
  esportaSchemaPdf(schema: any) {
     // Crea un contenuto testuale per il PDF
     const doc = new jsPDF();

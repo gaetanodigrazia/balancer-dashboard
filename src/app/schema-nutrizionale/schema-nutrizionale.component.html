@@ -58,7 +58,6 @@
 
 
 <div *ngIf="tab === 'gestione-pasti' && schemaSelezionato">
-  <app-gestione-pasti
-    [schema]="schemaSelezionato"
-  ></app-gestione-pasti>
+  <app-gestione-pasti [schemaId]="schemaSelezionato.id"></app-gestione-pasti>
 </div>
+

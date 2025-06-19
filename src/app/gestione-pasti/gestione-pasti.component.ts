@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { SchemaNutrizionaleService, Alimento, Opzione, SchemaBrief, DettagliPasto } from '../services/schema-nutrizionale.service';
 
 @Component({
@@ -6,8 +6,11 @@ import { SchemaNutrizionaleService, Alimento, Opzione, SchemaBrief, DettagliPast
   templateUrl: './gestione-pasti.component.html',
   styleUrls: ['./gestione-pasti.component.css']
 })
-export class GestionePastiComponent implements OnInit {
-  @Input() schema!: SchemaBrief;
+export class GestionePastiComponent implements OnChanges {
+  @Input() schemaId!: number;
+
+  schema!: SchemaBrief;
+  dettagliPasti: { [tipoPasto: string]: DettagliPasto } = {};
 
   tipiPasto: string[] = [
     'colazione',
@@ -18,22 +21,51 @@ export class GestionePastiComponent implements OnInit {
     'cena'
   ];
 
-  dettagliPasti: { [tipoPasto: string]: DettagliPasto } = {};
-
   loading = false;
   message: string | null = null;
   error: string | null = null;
-
-  // Nuove proprietà per la modale
   opzioneDaEliminare: { tipoPasto: string; opzioneId: string } | null = null;
 
   constructor(private schemaService: SchemaNutrizionaleService) {}
 
-  ngOnInit() {
-    this.dettagliPasti = this.schema.dettagli || {};
-    this.tipiPasto.forEach(tp => {
-      if (!this.dettagliPasti[tp]) {
-        this.dettagliPasti[tp] = { opzioni: [] };
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['schemaId']) {
+      console.log('📦 schemaId ricevuto in GestionePastiComponent:', this.schemaId);
+
+      if (this.schemaId) {
+        this.caricaSchema();
+      } else {
+        console.warn('⚠️ schemaId non definito, impossibile caricare lo schema.');
+      }
+    }
+  }
+
+  private caricaSchema() {
+    this.loading = true;
+    this.schemaService.getSchemaById(this.schemaId).subscribe({
+      next: (data) => {
+              console.log('📄 Schema ricevuto dal backend:', data); // 👈 Log importante
+
+        this.schema = data;
+        this.dettagliPasti = {};
+
+        this.tipiPasto.forEach(tp => {
+          const pasto = this.schema.dettagli?.[tp];
+          if (pasto && pasto.opzioni?.length > 0) {
+            pasto.opzioni.forEach(op => op.salvata = true);
+            this.dettagliPasti[tp] = pasto;
+          } else {
+            this.dettagliPasti[tp] = { opzioni: [] };
+          }
+        });
+
+        console.log('✅ Schema caricato:', this.schema);
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Errore durante il caricamento dello schema:', err);
+        this.loading = false;
+        this.error = err.error?.detail || 'Errore nel caricamento dello schema.';
       }
     });
   }
@@ -76,7 +108,6 @@ export class GestionePastiComponent implements OnInit {
         this.loading = false;
         this.message = 'Opzione eliminata con successo.';
 
-        // Chiudi la modale
         const modalEl = document.getElementById('confermaEliminazioneModal');
         if (modalEl) {
           const modal = (window as any).bootstrap.Modal.getInstance(modalEl);
@@ -115,10 +146,7 @@ export class GestionePastiComponent implements OnInit {
 
   aggiungiSubAlimento(tipoPasto: string, opzioneIndex: number, alimentoIndex: number) {
     const alimento = this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].alimenti[alimentoIndex];
-    if (!alimento) return;
-    if (!alimento.gruppoAlimenti) {
-      alimento.gruppoAlimenti = [];
-    }
+    alimento.gruppoAlimenti = alimento.gruppoAlimenti || [];
     alimento.gruppoAlimenti.push(this.nuovoAlimento());
   }
 
@@ -167,7 +195,7 @@ export class GestionePastiComponent implements OnInit {
 
     const opzione = this.dettagliPasti[tipoPasto].opzioni[opzioneIndex];
     const alimentiValidi = opzione.alimenti.filter(
-      a => a.nome?.trim() && a.grammi && a.macronutriente
+      a => a.nome?.trim() && a.macronutriente && (a.macronutriente === 'gruppo' || a.grammi)
     );
 
     if (alimentiValidi.length === 0) {
