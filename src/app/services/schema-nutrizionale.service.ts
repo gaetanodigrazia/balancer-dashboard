@@ -16,6 +16,21 @@ export interface SchemaBrief {
 
 export type Opzione = Alimento[];
 
+export interface DettagliPasto {
+  opzioni: Opzione[];
+}
+
+export interface SchemaBrief {
+  id: number;
+  nome: string;
+  calorie?: number;
+  carboidrati?: number;
+  grassi?: number;
+  proteine?: number;
+  acqua?: number;
+  dettagli?: { [pasto: string]: DettagliPasto }; // esempio struttura
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -42,13 +57,16 @@ getSchemiDisponibili(): Observable<SchemaBrief[]> {
     return this.http.post(`${this.baseUrl}/dati-generali`, payload);
   }
 
-// Cambia il tipo di tipoSchema in numero
 salvaOpzioniPasti(payload: {
   nome: string;
-  tipoSchema: number;   // qui numero
-  tipoPasto: string;
-  dettagli: Opzione[];
+  tipoSchema: number;
+  dettagli: { [tipoPasto: string]: DettagliPasto };
 }): Observable<any> {
   return this.http.post(`${this.baseUrl}/dinamico/completo`, payload);
 }
+eliminaSchema(id: number): Observable<any> {
+  return this.http.delete(`${this.baseUrl}/${id}`);
+}
+
+
 }

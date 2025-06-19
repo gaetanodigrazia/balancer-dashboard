@@ -13,6 +13,10 @@ import { SpeseMensiliComponent } from './spese-mensili/spese-mensili.component';
 import { NgChartsModule } from 'ng2-charts';
 import { RicetteComponent } from './ricette/ricette.component';
 import { SchemaNutrizionaleComponent } from './schema-nutrizionale/schema-nutrizionale.component';
+import { RiepilogoSchemiComponent } from './riepilogo-schemi/riepilogo-schemi.component';
+import { InserisciSchemaComponent } from './inserisci-schema/inserisci-schema.component';
+import { GestioneSchemaComponent } from './gestione-schema/gestione-schema.component';
+import { GestionePastiComponent } from './gestione-pasti/gestione-pasti.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +26,11 @@ import { SchemaNutrizionaleComponent } from './schema-nutrizionale/schema-nutriz
     ScontrinoComponent,
     SpeseMensiliComponent,
     RicetteComponent,
-  SchemaNutrizionaleComponent  ],
+  SchemaNutrizionaleComponent,
+RiepilogoSchemiComponent,
+InserisciSchemaComponent,
+GestioneSchemaComponent,
+GestionePastiComponent],
   imports: [
     BrowserModule,
     FormsModule,

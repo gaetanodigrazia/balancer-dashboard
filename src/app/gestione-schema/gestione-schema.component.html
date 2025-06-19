@@ -1,0 +1,105 @@
+<div class="card p-4 shadow-sm rounded-4 bg-white">
+  <h5 class="mb-4">📝 Modifica Schema Nutrizionale</h5>
+
+  <form (submit)="inviaDatiGenerali(); $event.preventDefault()" novalidate>
+    <div class="mb-3">
+      <label for="nome" class="form-label fw-semibold">Nome schema:</label>
+      <input
+        id="nome"
+        type="text"
+        class="form-control"
+        [(ngModel)]="nome"
+        name="nome"
+        required
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="calorie" class="form-label fw-semibold">Calorie:</label>
+      <input
+        id="calorie"
+        type="number"
+        class="form-control"
+        [(ngModel)]="calorie"
+        name="calorie"
+        min="0"
+        step="0.01"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="carboidrati" class="form-label fw-semibold">Carboidrati (g):</label>
+      <input
+        id="carboidrati"
+        type="number"
+        class="form-control"
+        [(ngModel)]="carboidrati"
+        name="carboidrati"
+        min="0"
+        step="0.01"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="grassi" class="form-label fw-semibold">Grassi (g):</label>
+      <input
+        id="grassi"
+        type="number"
+        class="form-control"
+        [(ngModel)]="grassi"
+        name="grassi"
+        min="0"
+        step="0.01"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="proteine" class="form-label fw-semibold">Proteine (g):</label>
+      <input
+        id="proteine"
+        type="number"
+        class="form-control"
+        [(ngModel)]="proteine"
+        name="proteine"
+        min="0"
+        step="0.01"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="acqua" class="form-label fw-semibold">Acqua (L):</label>
+      <input
+        id="acqua"
+        type="number"
+        class="form-control"
+        [(ngModel)]="acqua"
+        name="acqua"
+        min="0"
+        step="0.01"
+        required
+      />
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
+      {{ loading ? 'Salvataggio...' : 'Salva Modifiche' }}
+    </button>
+
+    <!-- Pulsante elimina -->
+    <button
+      type="button"
+      class="btn btn-danger w-100 mt-3"
+      (click)="eliminaSchema()"
+      [disabled]="loading"
+    >
+      Elimina Schema
+    </button>
+
+    <div *ngIf="message" class="text-success mt-3 fw-semibold">{{ message }}</div>
+    <div *ngIf="error" class="text-danger mt-3 fw-semibold">{{ error }}</div>
+  </form>
+</div>
