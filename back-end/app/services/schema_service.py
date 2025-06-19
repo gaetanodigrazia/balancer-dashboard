@@ -121,3 +121,6 @@ async def elimina_schema(session: AsyncSession, schema_id: int):
         raise HTTPException(status_code=404, detail="Schema non trovato")
     await session.delete(db_schema)
     await session.commit()
+
+
+

@@ -118,32 +118,48 @@ export class GestionePastiComponent implements OnInit {
     });
   }
 
-  // NUOVA funzione per salvare solo un singolo pasto completo (tutte le opzioni di quel tipo)
-  salvaSingoloPasto(tipoPasto: string) {
-    if (!this.schema) return;
+salvaSingoloPasto(tipoPasto: string) {
+  if (!this.schema) return;
 
-    this.loading = true;
-    this.message = null;
-    this.error = null;
+  this.loading = true;
+  this.message = null;
+  this.error = null;
 
-    const payload = {
-      nome: this.schema.nome,
-      tipoSchema: this.schema.id,
-      tipoPasto: tipoPasto,
-      dettagli: this.dettagliPasti[tipoPasto]  // Solo il pasto selezionato
-    };
+  const raw = this.dettagliPasti[tipoPasto];
 
-    this.schemaService.salvaDettagliSingoloPasto(payload).subscribe({
-      next: () => {
-        this.loading = false;
-        this.message = `Dettagli per '${this.formatTipoPasto(tipoPasto)}' salvati con successo!`;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.detail || `Errore nel salvataggio del pasto '${tipoPasto}'.`;
-      }
-    });
-  }
+  const opzioniPulite = raw.opzioni.filter((opzione: Alimento[]) =>
+    opzione.length > 0 &&
+    opzione.some(a => a.nome?.trim() && a.grammi && a.macronutriente)
+  );
+
+  const payload = {
+    nome: this.schema.nome,
+    tipoSchema: this.schema.id,
+    tipoPasto: tipoPasto,
+    dettagli: { opzioni: opzioniPulite }
+  };
+
+  this.schemaService.salvaDettagliSingoloPasto(payload).subscribe({
+    next: () => {
+      this.schemaService.getSchemaById(this.schema.id).subscribe({
+        next: (updatedSchema) => {
+          this.dettagliPasti[tipoPasto] = updatedSchema.dettagli?.[tipoPasto] || { opzioni: [] };
+          this.loading = false;
+          this.message = `Dettagli per '${this.formatTipoPasto(tipoPasto)}' aggiornati con successo!`;
+        },
+        error: (err) => {
+          this.loading = false;
+          this.error = 'Errore nel ricaricare lo schema aggiornato.';
+        }
+      });
+    },
+    error: (err) => {
+      this.loading = false;
+      this.error = err.error?.detail || `Errore nel salvataggio del pasto '${tipoPasto}'.`;
+    }
+  });
+}
+
 
   formatTipoPasto(tipo: string): string {
     return tipo.replace(/_/g, ' ');

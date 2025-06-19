@@ -7,6 +7,8 @@ from app.models.schema_models import SchemaNutrizionaleInput, SchemaNutrizionale
 from app.models.orm_models import SchemaNutrizionale
 from app.database import SessionLocal
 from sqlalchemy import text
+from fastapi import Depends
+
 
 router = APIRouter(prefix="/schemi-nutrizionali", tags=["schemi-nutrizionali"])
 logger = logging.getLogger("uvicorn.error")
@@ -215,3 +217,22 @@ async def elimina_schema(id: int):
         await session.delete(schema)
         await session.commit()
     return {"status": "ok", "message": f"Schema con id {id} eliminato."}
+
+
+@router.get("/{schema_id}")
+async def get_schema(schema_id: int):
+    async with SessionLocal() as session:
+        db_schema = await session.get(SchemaNutrizionale, schema_id)
+        if not db_schema:
+            raise HTTPException(status_code=404, detail="Schema non trovato")
+
+        data = db_schema.__dict__.copy()
+        if data.get("dettagli"):
+            try:
+                data["dettagli"] = json.loads(data["dettagli"])
+            except Exception:
+                data["dettagli"] = {}
+        else:
+            data["dettagli"] = {}
+
+        return data

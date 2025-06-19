@@ -76,4 +76,8 @@ salvaDettagliSingoloPasto(payload: {
   return this.http.post(`${this.baseUrl}/dinamico/pasto`, payload);
 }
 
+getSchemaById(id: number) {
+  return this.http.get<SchemaBrief>(`/schemi-nutrizionali/${id}`);
+}
+
 }
