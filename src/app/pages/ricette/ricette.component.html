@@ -1,0 +1,29 @@
+<table class="table table-striped table-hover align-middle shadow-sm rounded-3 bg-white">
+  <thead class="table-primary text-primary">
+    <tr>
+      <th scope="col">Nome Schema</th>
+      <th scope="col">Calorie</th>
+      <th scope="col">Carboidrati (g)</th>
+      <th scope="col">Grassi (g)</th>
+      <th scope="col">Proteine (g)</th>
+      <th scope="col">Acqua (L)</th>
+      <th scope="col" style="width: 160px;">Genera Ricetta</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let schema of schemi" [class.table-primary]="schema === selectedSchema">
+      <td><strong>{{ schema.nome }}</strong></td>
+      <td>{{ schema.calorie | number:'1.0-2' }}</td>
+      <td>{{ schema.carboidrati | number:'1.0-2' }}</td>
+      <td>{{ schema.grassi | number:'1.0-2' }}</td>
+      <td>{{ schema.proteine | number:'1.0-2' }}</td>
+      <td>{{ schema.acqua | number:'1.0-2' }}</td>
+      <td>
+        <button class="btn btn-sm btn-primary" [routerLink]="['/genera-ricette', schema.id]">
+          Genera Ricetta
+        </button>
+      </td>
+    </tr>
+  </tbody>
+</table>

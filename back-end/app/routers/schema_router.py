@@ -105,6 +105,8 @@ async def crea_schemi(schemi: List[SchemaNutrizionaleInput]):
 
     return result
 
+
+
 @router.post("/dati-generali")
 async def salva_dati_generali(payload: dict = Body(...)):
     nome = payload.get("nome")
@@ -113,6 +115,7 @@ async def salva_dati_generali(payload: dict = Body(...)):
     grassi = payload.get("grassi")
     proteine = payload.get("proteine")
     acqua = payload.get("acqua")
+    is_modello = payload.get("is_modello", False)  # ✅
 
     if not all([nome, calorie, carboidrati, grassi, proteine, acqua]):
         raise HTTPException(status_code=400, detail="Tutti i campi sono obbligatori")
@@ -131,6 +134,7 @@ async def salva_dati_generali(payload: dict = Body(...)):
             db_schema.grassi = grassi
             db_schema.proteine = proteine
             db_schema.acqua = acqua
+            db_schema.is_modello = is_modello
         else:
             db_schema = SchemaNutrizionale(
                 nome=nome,
@@ -139,6 +143,7 @@ async def salva_dati_generali(payload: dict = Body(...)):
                 grassi=grassi,
                 proteine=proteine,
                 acqua=acqua,
+                is_modello=is_modello,  # ✅
                 dettagli="{}"
             )
             session.add(db_schema)
@@ -147,6 +152,7 @@ async def salva_dati_generali(payload: dict = Body(...)):
         await session.refresh(db_schema)
 
     return {"status": "ok", "message": "Dati generali salvati con successo"}
+
 
 @router.post("/dinamico/completo")
 async def salva_schema_completo(payload: dict = Body(...)):
@@ -266,3 +272,28 @@ async def elimina_opzione_per_id(schema_id: int, tipo_pasto: str, opzione_id: st
 
         await session.commit()
         return {"status": "ok", "message": "Opzione rimossa"}
+
+
+
+
+@router.get("/schema/modelli", response_model=List[SchemaNutrizionaleOut])
+async def getModelli():
+    async with SessionLocal() as session:
+        result = await session.execute(text("SELECT * FROM schemi_nutrizionali ORDER BY id DESC"))
+        rows = result.fetchall()
+        schemi = []
+        for row in rows:
+            data = dict(row._mapping)
+            if data.get('dettagli'):
+                try:
+                    dettagli_raw = json.loads(data['dettagli'])
+                    data['dettagli'] = normalizza_dettagli(dettagli_raw)
+                except Exception:
+                    data['dettagli'] = {}
+            else:
+                data['dettagli'] = {}
+            
+            if data.get("is_modello", False):
+                schemi.append(data)
+
+        return schemi

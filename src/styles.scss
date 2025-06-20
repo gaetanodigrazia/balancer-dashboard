@@ -8,7 +8,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-  background-color: #ffffff;
+  background-color: #ecefff3d !important;
   padding: 2rem 1rem;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.04);
   border-right: 1px solid #e0e0e0;
@@ -18,7 +18,7 @@ body {
 }
 
 .sidebar h4 {
-  color: #2c7be5;
+  background-color: #ecefff3d !important;
   font-weight: 700;
 }
 
@@ -41,7 +41,7 @@ body {
 }
 
 .section-card {
-  background: white;
+  background-color: #ecefff3d !important;
   padding: 1.5rem;
   margin-bottom: 2rem;
   border-radius: 12px;
@@ -53,5 +53,14 @@ body {
 
 .table thead th {
   font-weight: 600;
-  color: #495057;
+  background-color: #ecefff3d !important;
+}
+
+
+.bg-soft {
+  background-color: #ecefff3d !important;
+}
+
+.bg-light {
+  background-color: #ecefff3d !important;
 }

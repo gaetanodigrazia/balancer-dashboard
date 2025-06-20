@@ -1,22 +1,47 @@
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
+
+
+# --- Ricetta ---
+
+class Ingrediente(BaseModel):
+    nome: str
+    quantita: str
+
+class RicettaOutput(BaseModel):
+    titolo: str
+    ingredienti: List[Ingrediente]
+    procedimento: str
+    presentazione: str
+    nota_nutrizionale: Optional[str] = None
+
+class RicettaRequest(BaseModel):
+    tipo_pasto: str
+    tipo_schema: str
+
+
+# --- Alimenti e opzioni schema nutrizionale ---
 
 class Alimento(BaseModel):
     nome: str
-    quantita: str
     macronutriente: str
+    grammi: Optional[float] = None
+    gruppoAlimenti: Optional[List["Alimento"]] = None  # supporta combo
 
-class GruppoAlimenti(BaseModel):
+Alimento.update_forward_refs()
+
+class OpzionePasto(BaseModel):
+    id: Optional[str]
+    nome: Optional[str]
     alimenti: List[Alimento]
+    salvata: Optional[bool] = False
+    inModifica: Optional[bool] = False
 
-class Opzione(BaseModel):
-    id: Optional[str] = None
-    opzione: int
-    gruppi_alimenti: List[GruppoAlimenti]
-    salvata: bool = True
-    
 class DettagliPasto(BaseModel):
-    opzioni: List[Opzione]
+    opzioni: List[OpzionePasto]
+
+
+# --- Schema Nutrizionale ---
 
 class SchemaNutrizionaleInput(BaseModel):
     nome: str
@@ -26,11 +51,16 @@ class SchemaNutrizionaleInput(BaseModel):
     proteine: float
     acqua: float
     dettagli: Dict[str, DettagliPasto]
+    is_modello: Optional[bool] = False
 
 class SchemaNutrizionaleOut(SchemaNutrizionaleInput):
     id: int
+
     class Config:
         orm_mode = True
+
+
+# --- Modelli OCR / Scontrino ---
 
 class ProdottoModel(BaseModel):
     nome: str
@@ -47,6 +77,7 @@ class ScontrinoOut(BaseModel):
     id: int
     data: str
     totale: float
+
     class Config:
         orm_mode = True
 
@@ -56,22 +87,13 @@ class ProdottoOut(BaseModel):
     quantita: int
     prezzo_unitario: float
     scontrino_id: Optional[int]
+
     class Config:
         orm_mode = True
 
-class Ingrediente(BaseModel):
-    nome: str
-    quantita: str
 
-class RicettaOutput(BaseModel):
-    titolo: str
-    ingredienti: List[Ingrediente]
-    procedimento: str
-
-class RicettaRequest(BaseModel):
-    tipo_pasto: str
-    tipo_schema: str
+# --- Aggiornamento ingrediente (se serve) ---
 
 class IngredienteUpdate(BaseModel):
     nome: str
-    quantita: str  # es. "150 gr", "2 pezzi"
+    quantita: str

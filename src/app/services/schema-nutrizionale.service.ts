@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 export interface Alimento {
   nome: string;
@@ -93,6 +94,14 @@ rimuoviOpzione(schemaId: number, tipoPasto: string, opzioneId: string) {
   );
 }
 
+clonaSchema(id: number) {
+  return this.http.post<{ message: string; id: number }>(`/schemi-nutrizionali/clona/${id}`, {});
+}
+getModelli() {
+  return this.http.get<SchemaBrief[]>('/schemi-nutrizionali/schema/modelli').pipe(
+    tap((res) => console.log('✅ Modelli caricati:', res))
+  );
+}
 
 
 }

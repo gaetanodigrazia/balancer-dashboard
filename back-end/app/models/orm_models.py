@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, String, ForeignKey, Text
+from sqlalchemy import Column, Integer, Float, Boolean, String, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from app.database import Base
 
@@ -29,3 +29,4 @@ class SchemaNutrizionale(Base):
     proteine = Column(Float, nullable=False)
     acqua = Column(Float, nullable=False)
     dettagli = Column(Text, nullable=False)
+    is_modello = Column(Boolean, default=False)
