@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_BASE_URL } from '../api.config';
 
 export interface Ingrediente {
   nome: string;
@@ -19,7 +20,7 @@ export interface Ricetta {
   providedIn: 'root'
 })
 export class RicettaService {
-  private baseUrl = '/ricette'; // Assicurati che il proxy o l’API base sia corretta
+  private baseUrl = `${API_BASE_URL}/ricette`;
 
   constructor(private http: HttpClient) {}
 

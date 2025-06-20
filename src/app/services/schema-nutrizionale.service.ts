@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { API_BASE_URL } from '../api.config';
 
 export interface Alimento {
   nome: string;
@@ -9,11 +10,6 @@ export interface Alimento {
   grammi: number | null;
   gruppoAlimenti?: Alimento[];
 }
-export interface SchemaBrief {
-  id: number;
-  nome: string;
-}
-
 
 export interface Opzione {
   id?: string;
@@ -21,7 +17,6 @@ export interface Opzione {
   salvata?: boolean;
   nome?: string;
   inModifica?: boolean;
-
 }
 
 export interface DettagliPasto {
@@ -36,25 +31,26 @@ export interface SchemaBrief {
   grassi?: number;
   proteine?: number;
   acqua?: number;
-  dettagli?: { [pasto: string]: DettagliPasto }; // esempio struttura
+  dettagli?: { [pasto: string]: DettagliPasto };
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class SchemaNutrizionaleService {
-  private baseUrl = '/schemi-nutrizionali';
+  
+  private baseUrl = `${API_BASE_URL}/schemi-nutrizionali`;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
+
   schemiDisponibili: SchemaBrief[] = [];
 
   getSchemiDisponibili(): Observable<SchemaBrief[]> {
-    return this.http.get<SchemaBrief[]>(`${this.baseUrl}`);
+    return this.http.get<SchemaBrief[]>(this.baseUrl);
   }
 
-
   salvaDatiGenerali(payload: {
-    id?: number; // ✅ Aggiunto
+    id?: number;
     nome: string;
     calorie: number;
     carboidrati: number;
@@ -62,10 +58,10 @@ export class SchemaNutrizionaleService {
     proteine: number;
     acqua: number;
     is_modello?: boolean;
+    clona_da?: number;
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/dati-generali`, payload);
   }
-
 
   salvaOpzioniPasti(payload: {
     nome: string;
@@ -74,9 +70,11 @@ export class SchemaNutrizionaleService {
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/dinamico/completo`, payload);
   }
+
   eliminaSchema(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${id}`);
   }
+
   salvaDettagliSingoloPasto(payload: {
     nome: string;
     tipoSchema: number;
@@ -86,24 +84,23 @@ export class SchemaNutrizionaleService {
     return this.http.post(`${this.baseUrl}/dinamico/pasto`, payload);
   }
 
-  getSchemaById(id: number) {
-    return this.http.get<SchemaBrief>(`/schemi-nutrizionali/${id}`);
+  getSchemaById(id: number): Observable<SchemaBrief> {
+    return this.http.get<SchemaBrief>(`${this.baseUrl}/${id}`);
   }
 
-  rimuoviOpzione(schemaId: number, tipoPasto: string, opzioneId: string) {
-    return this.http.delete(
-      `/schemi-nutrizionali/${schemaId}/opzione/${tipoPasto}/${opzioneId}/`
+  rimuoviOpzione(schemaId: number, tipoPasto: string, opzioneId: string): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/${schemaId}/opzione/${tipoPasto}/${opzioneId}/`);
+  }
+
+  clonaSchema(id: number): Observable<{ message: string; id: number }> {
+    return this.http.post<{ message: string; id: number }>(
+      `${this.baseUrl}/clona/${id}`, {}
     );
   }
 
-  clonaSchema(id: number) {
-    return this.http.post<{ message: string; id: number }>(`/schemi-nutrizionali/clona/${id}`, {});
-  }
-  getModelli() {
-    return this.http.get<SchemaBrief[]>('/schemi-nutrizionali/schema/modelli').pipe(
+  getModelli(): Observable<SchemaBrief[]> {
+    return this.http.get<SchemaBrief[]>(`${this.baseUrl}/schema/modelli`).pipe(
       tap((res) => console.log('✅ Modelli caricati:', res))
     );
   }
-
-
 }
