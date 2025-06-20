@@ -1,1 +1,1 @@
-# hedge-dashboard
+# Balancer Dashboard
