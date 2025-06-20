@@ -53,17 +53,19 @@ export class SchemaNutrizionaleService {
   }
 
 
-  // Salva dati generali di uno schema
   salvaDatiGenerali(payload: {
+    id?: number; // ✅ Aggiunto
     nome: string;
     calorie: number;
     carboidrati: number;
     grassi: number;
     proteine: number;
     acqua: number;
+    is_modello?: boolean;
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}/dati-generali`, payload);
   }
+
 
   salvaOpzioniPasti(payload: {
     nome: string;
@@ -75,33 +77,33 @@ export class SchemaNutrizionaleService {
   eliminaSchema(id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${id}`);
   }
-salvaDettagliSingoloPasto(payload: {
-  nome: string;
-  tipoSchema: number;
-  tipoPasto: string;
-  dettagli: DettagliPasto;
-}): Observable<any> {
-  return this.http.post(`${this.baseUrl}/dinamico/pasto`, payload);
-}
+  salvaDettagliSingoloPasto(payload: {
+    nome: string;
+    tipoSchema: number;
+    tipoPasto: string;
+    dettagli: DettagliPasto;
+  }): Observable<any> {
+    return this.http.post(`${this.baseUrl}/dinamico/pasto`, payload);
+  }
 
-getSchemaById(id: number) {
-  return this.http.get<SchemaBrief>(`/schemi-nutrizionali/${id}`);
-}
+  getSchemaById(id: number) {
+    return this.http.get<SchemaBrief>(`/schemi-nutrizionali/${id}`);
+  }
 
-rimuoviOpzione(schemaId: number, tipoPasto: string, opzioneId: string) {
-  return this.http.delete(
-    `/schemi-nutrizionali/${schemaId}/opzione/${tipoPasto}/${opzioneId}/`
-  );
-}
+  rimuoviOpzione(schemaId: number, tipoPasto: string, opzioneId: string) {
+    return this.http.delete(
+      `/schemi-nutrizionali/${schemaId}/opzione/${tipoPasto}/${opzioneId}/`
+    );
+  }
 
-clonaSchema(id: number) {
-  return this.http.post<{ message: string; id: number }>(`/schemi-nutrizionali/clona/${id}`, {});
-}
-getModelli() {
-  return this.http.get<SchemaBrief[]>('/schemi-nutrizionali/schema/modelli').pipe(
-    tap((res) => console.log('✅ Modelli caricati:', res))
-  );
-}
+  clonaSchema(id: number) {
+    return this.http.post<{ message: string; id: number }>(`/schemi-nutrizionali/clona/${id}`, {});
+  }
+  getModelli() {
+    return this.http.get<SchemaBrief[]>('/schemi-nutrizionali/schema/modelli').pipe(
+      tap((res) => console.log('✅ Modelli caricati:', res))
+    );
+  }
 
 
 }

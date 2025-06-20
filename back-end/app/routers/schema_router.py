@@ -52,21 +52,29 @@ async def crea_schemi(schemi: List[SchemaNutrizionaleInput]):
             dettagli_dict = {k: v.dict() for k, v in schema.dettagli.items()}
             dettagli_json = json.dumps(dettagli_dict)
 
-            existing = await session.execute(
-                text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"),
-                {"nome": schema.nome}
-            )
-            existing_row = existing.first()
-
-            if existing_row:
-                db_schema = await session.get(SchemaNutrizionale, existing_row.id)
+            if schema.id:
+                db_schema = await session.get(SchemaNutrizionale, schema.id)
+                if not db_schema:
+                    raise HTTPException(status_code=404, detail="Schema non trovato per update")
+                # 🔁 UPDATE
+                db_schema.nome = schema.nome
                 db_schema.calorie = schema.calorie
                 db_schema.carboidrati = schema.carboidrati
                 db_schema.grassi = schema.grassi
                 db_schema.proteine = schema.proteine
                 db_schema.acqua = schema.acqua
                 db_schema.dettagli = dettagli_json
+                db_schema.is_modello = schema.is_modello
             else:
+                # 🆕 CREATE
+                existing = await session.execute(
+                    text("SELECT * FROM schemi_nutrizionali WHERE nome = :nome"),
+                    {"nome": schema.nome}
+                )
+                existing_row = existing.first()
+                if existing_row:
+                    raise HTTPException(status_code=400, detail=f"Schema con nome '{schema.nome}' già esistente")
+
                 db_schema = SchemaNutrizionale(
                     nome=schema.nome,
                     calorie=schema.calorie,
@@ -74,7 +82,8 @@ async def crea_schemi(schemi: List[SchemaNutrizionaleInput]):
                     grassi=schema.grassi,
                     proteine=schema.proteine,
                     acqua=schema.acqua,
-                    dettagli=dettagli_json
+                    dettagli=dettagli_json,
+                    is_modello=schema.is_modello
                 )
                 session.add(db_schema)
 
@@ -84,6 +93,7 @@ async def crea_schemi(schemi: List[SchemaNutrizionaleInput]):
         for s in saved_schemi:
             await session.refresh(s)
 
+    # Output
     result = []
     for s in saved_schemi:
         try:
@@ -99,6 +109,7 @@ async def crea_schemi(schemi: List[SchemaNutrizionaleInput]):
             grassi=s.grassi,
             proteine=s.proteine,
             acqua=s.acqua,
+            is_modello=s.is_modello,
             dettagli=dettagli_obj
         )
         result.append(schema_out)
