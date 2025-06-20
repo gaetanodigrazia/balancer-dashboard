@@ -1,25 +1,25 @@
 # --------- STAGE 1: Build Angular ---------
-FROM node:18 AS frontend-builder
+FROM node:18 AS builder
 
 WORKDIR /app
 COPY . .
 
-RUN npm install && npm run build --configuration=production
+# Installa dipendenze e builda il progetto
+RUN npm install && npm run build -- --configuration production
 
-# --------- STAGE 2: Backend + Static Frontend ---------
-FROM python:3.10-slim
+# --------- STAGE 2: Serve tramite NGINX ---------
+FROM nginx:alpine
 
-WORKDIR /app
+# Rimuove default NGINX html
+RUN rm -rf /usr/share/nginx/html/*
 
-# Copia backend
-COPY backend/ ./backend/
-COPY backend/requirements.txt ./requirements.txt
+# Copia il build Angular
+COPY --from=builder /app/dist/balancer /usr/share/nginx/html
 
-# Copia Angular buildato
-COPY --from=frontend-builder /app/dist /app/dist
+# (Opzionale) Gestione routing Angular: fallback su index.html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Installa i requirements Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Espone la porta
+EXPOSE 80
 
-# Serve FastAPI con Angular static
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["nginx", "-g", "daemon off;"]
