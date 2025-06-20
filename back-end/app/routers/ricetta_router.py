@@ -136,3 +136,4 @@ async def genera_ricetta(schema_id: int, tipo_pasto: str):
         except Exception as e:
             logger.error(f"❌ Errore GPT: {str(e)}")
             raise HTTPException(status_code=500, detail=f"Errore nella generazione della ricetta")
+

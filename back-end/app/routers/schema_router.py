@@ -297,3 +297,63 @@ async def getModelli():
                 schemi.append(data)
 
         return schemi
+
+
+@router.post("/clona/{schema_id}", response_model=SchemaNutrizionaleOut)
+async def clona_schema(schema_id: int):
+    async with SessionLocal() as session:
+        db_schema = await session.get(SchemaNutrizionale, schema_id)
+        if not db_schema:
+            raise HTTPException(status_code=404, detail="Schema non trovato")
+
+        # Genera un nuovo nome (assicurati che non esista già)
+        nuovo_nome_base = f"Copia di {db_schema.nome}"
+        nuovo_nome = nuovo_nome_base
+        count = 1
+
+        while True:
+            existing = await session.execute(
+                text("SELECT 1 FROM schemi_nutrizionali WHERE nome = :nome"),
+                {"nome": nuovo_nome}
+            )
+            if existing.first():
+                count += 1
+                nuovo_nome = f"{nuovo_nome_base} ({count})"
+            else:
+                break
+
+        # Crea una nuova istanza
+        nuovo_schema = SchemaNutrizionale(
+            nome=nuovo_nome,
+            calorie=db_schema.calorie,
+            carboidrati=db_schema.carboidrati,
+            grassi=db_schema.grassi,
+            proteine=db_schema.proteine,
+            acqua=db_schema.acqua,
+            is_modello=db_schema.is_modello,
+            dettagli=db_schema.dettagli
+        )
+        session.add(nuovo_schema)
+        await session.commit()
+        await session.refresh(nuovo_schema)
+
+        # Parsing dettagli
+        try:
+            dettagli_dict = json.loads(nuovo_schema.dettagli)
+            dettagli_parsed = {
+                k: DettagliPasto.parse_obj(v) for k, v in dettagli_dict.items()
+            }
+        except Exception:
+            dettagli_parsed = {}
+
+        return SchemaNutrizionaleOut(
+            id=nuovo_schema.id,
+            nome=nuovo_schema.nome,
+            calorie=nuovo_schema.calorie,
+            carboidrati=nuovo_schema.carboidrati,
+            grassi=nuovo_schema.grassi,
+            proteine=nuovo_schema.proteine,
+            acqua=nuovo_schema.acqua,
+            is_modello=nuovo_schema.is_modello,
+            dettagli=dettagli_parsed
+        )
