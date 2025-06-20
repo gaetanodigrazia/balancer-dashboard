@@ -1,28 +1,125 @@
 <style>
-  .custom-divider {
-    border-bottom: 1px solid #dee2e6;
-    margin: 0.5rem 0;
+/* Sidebar mobile */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 260px;
+    height: 100%;
+    background-color: #fff;
+    border-right: 1px solid #dee2e6;
+    overflow-y: auto;
+    transition: left 0.3s ease;
+    z-index: 1050;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
   }
 
-  .sidebar-section-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: #6c757d;
-    opacity: 0.6;
-    letter-spacing: 0.05em;
-    margin: 1rem 0 0.5rem 0;
-    padding-left: 0.25rem;
+  .sidebar.show {
+    left: 0;
   }
+
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1040;
+  }
+
+  .overlay.show {
+    display: block;
+  }
+
+  .navbar.d-md-none {
+    z-index: 1065;
+    position: relative;
+  }
+
+  body.sidebar-open {
+    overflow: hidden;
+  }
+}
+
+/* Sidebar nav push down */
+.sidebar .nav {
+  margin-top: 4rem;
+}
+
+/* Sezione titoli nella sidebar */
+.sidebar-section-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #6c757d;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0.25rem;
+  opacity: 0.7;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Logo globale */
+.global-logo {
+  height: 64px;
+  background-color: #ecefff;
+  z-index: 1065;
+}
+
+/* Logo desktop sopra la sidebar */
+@media (min-width: 768px) {
+  .global-logo.d-md-flex {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .sidebar {
+    margin-top: 64px;
+  }
+
+  .main-content {
+    margin-left: 260px;
+  }
+}
 </style>
 
+<!-- LOGO MOBILE -->
+<div class="global-logo d-flex d-md-none navbar navbar-light bg-light px-3 align-items-center">
+  <button class="btn btn-outline-secondary me-2" (click)="toggleSidebar()">
+    &#9776;
+  </button>
+  <span class="fw-bold fs-5">📊 Balancer</span>
+</div>
+
+<!-- LOGO DESKTOP -->
+<div class="global-logo d-none d-md-flex align-items-center px-4 py-3 border-bottom">
+  <span class="fw-bold fs-4">📊 Balancer</span>
+</div>
+
+<!-- Overlay per mobile -->
+<div class="overlay" [class.show]="sidebarOpen" (click)="toggleSidebar()"></div>
+
+<!-- Layout principale -->
 <div class="d-flex" style="height: 100vh;">
   <!-- Sidebar -->
-  <div class="p-4 shadow-sm" style="width: 260px; background-color: #f8f9fa; border-right: 1px solid #dee2e6;">
-    <h4 class="text-dark fw-bold mb-4">Balancer</h4>
+  <div
+    class="sidebar p-4 shadow-sm"
+    [class.d-none]="!sidebarOpen && isMobileView"
+    [class.d-md-block]="!isMobileView"
+    [class.show]="sidebarOpen"
+  >
+    <!-- Sidebar Navigation -->
     <ul class="nav flex-column">
-
-      <div class="sidebar-section-title">Navigazione</div>
-
+      <p class="sidebar-section-title">Navigazione</p>
       <li class="nav-item mb-2">
         <a class="nav-link px-2 py-1 rounded text-dark"
            [routerLink]="['/']"
@@ -31,9 +128,8 @@
           Home
         </a>
       </li>
-      <div class="custom-divider"></div>
-      <div class="sidebar-section-title">RICETTE</div>
 
+      <p class="sidebar-section-title">Ricette</p>
       <li class="nav-item mb-2">
         <a class="nav-link px-2 py-1 rounded text-dark"
            [routerLink]="['/ricette']"
@@ -41,8 +137,8 @@
           Ricette
         </a>
       </li>
-      <div class="custom-divider"></div>
-      <div class="sidebar-section-title">SCHEMI</div>
+
+      <p class="sidebar-section-title">Schemi</p>
       <li class="nav-item mb-2">
         <a class="nav-link px-2 py-1 rounded text-dark"
            [routerLink]="['/riepilogo']"
@@ -64,34 +160,32 @@
           Inserisci schema
         </a>
       </li>
-            <li class="nav-item mb-2">
+      <li class="nav-item mb-2">
         <a class="nav-link px-2 py-1 rounded text-dark"
            [routerLink]="['/gestione-schema']"
            routerLinkActive="fw-bold text-primary bg-white shadow-sm">
           Gestione Schema
         </a>
       </li>
-            <li class="nav-item mb-2">
+      <li class="nav-item mb-2">
         <a class="nav-link px-2 py-1 rounded text-dark"
            [routerLink]="['/gestione-pasti']"
            routerLinkActive="fw-bold text-primary bg-white shadow-sm">
           Gestione Pasti
         </a>
       </li>
-            <li class="nav-item mb-2">
+      <li class="nav-item mb-2">
         <a class="nav-link px-2 py-1 rounded text-dark"
            [routerLink]="['/esporta']"
            routerLinkActive="fw-bold text-primary bg-white shadow-sm">
           Esporta
         </a>
       </li>
-
-
     </ul>
   </div>
 
   <!-- Main content -->
-  <div class="flex-grow-1 p-5 bg-light">
+  <div class="main-content flex-grow-1 p-4 p-md-5 bg-light">
     <router-outlet></router-outlet>
   </div>
 </div>
