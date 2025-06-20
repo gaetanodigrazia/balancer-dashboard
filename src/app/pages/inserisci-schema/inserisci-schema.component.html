@@ -97,6 +97,22 @@
   </label>
 </div>
 
+<!-- 🔁 Selezione modello da cui copiare -->
+<div class="mb-3" *ngIf="modelliDisponibili.length > 0">
+  <label for="modelloOrigine" class="form-label fw-semibold">Copia dettagli da modello:</label>
+  <select
+    id="modelloOrigine"
+    class="form-select"
+    [(ngModel)]="idModelloOrigine"
+    name="idModelloOrigine"
+  >
+    <option [ngValue]="null">-- Nessuna copia --</option>
+    <option *ngFor="let modello of modelliDisponibili" [value]="modello.id">
+      {{ modello.nome }}
+    </option>
+  </select>
+</div>
+
     <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
       {{ loading ? 'Salvataggio...' : 'Salva Schema' }}
     </button>

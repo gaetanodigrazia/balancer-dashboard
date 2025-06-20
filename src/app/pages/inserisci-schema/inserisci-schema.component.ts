@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { SchemaNutrizionaleService } from 'src/app/services/schema-nutrizionale.service';
+import { SchemaBrief, SchemaNutrizionaleService } from 'src/app/services/schema-nutrizionale.service';
 
 @Component({
   selector: 'app-inserisci-schema',
@@ -7,62 +7,69 @@ import { SchemaNutrizionaleService } from 'src/app/services/schema-nutrizionale.
   styleUrls: ['./inserisci-schema.component.css']
 })
 export class InserisciSchemaComponent {
-  nome: string = '';
-  calorie: number | null = null;
-  carboidrati: number | null = null;
-  grassi: number | null = null;
-  proteine: number | null = null;
-  acqua: number | null = null;
-  isModello: boolean = false; // ✅ nuova proprietà
-
+  nome = '';
+  calorie = 0;
+  carboidrati = 0;
+  grassi = 0;
+  proteine = 0;
+  acqua = 0;
+  isModello = false;
   loading = false;
-  message: string | null = null;
-  error: string | null = null;
+  message = '';
+  error = '';
+
+  modelliDisponibili: SchemaBrief[] = [];
+  idModelloOrigine: number | null = null;
 
   constructor(private schemaService: SchemaNutrizionaleService) {}
 
-  inviaDatiGenerali() {
-    this.message = null;
-    this.error = null;
+  ngOnInit(): void {
+    this.caricaModelli();
+  }
 
-    if (!this.nome.trim() || this.calorie === null || this.carboidrati === null ||
-        this.grassi === null || this.proteine === null || this.acqua === null) {
-      this.error = 'Compila tutti i campi.';
-      return;
-    }
+  caricaModelli(): void {
+    this.schemaService.getModelli().subscribe({
+      next: (modelli) => {
+        this.modelliDisponibili = modelli;
+      },
+      error: () => {
+        console.error('Errore nel caricamento dei modelli');
+      },
+    });
+  }
 
+  inviaDatiGenerali(): void {
     this.loading = true;
+    this.message = '';
+    this.error = '';
 
-    const payload = {
-      nome: this.nome.trim(),
+    const payload: any = {
+      nome: this.nome,
       calorie: this.calorie,
       carboidrati: this.carboidrati,
       grassi: this.grassi,
       proteine: this.proteine,
       acqua: this.acqua,
-      is_modello: this.isModello // ✅ invio del campo
+      is_modello: this.isModello,
     };
+
+    if (this.idModelloOrigine !== null) {
+      payload.clona_da = Number(this.idModelloOrigine); // ✅ conversione forzata a number
+    }
+
+    console.log('📤 Payload inviato:', payload);
 
     this.schemaService.salvaDatiGenerali(payload).subscribe({
       next: () => {
+        this.message = '✅ Schema creato con successo';
+        this.error = '';
         this.loading = false;
-        this.message = 'Schema salvato con successo!';
-        this.resetForm();
       },
-      error: (err) => {
+      error: () => {
+        this.message = '';
+        this.error = '❌ Errore durante il salvataggio dello schema';
         this.loading = false;
-        this.error = err.error?.detail || 'Errore nel salvataggio.';
-      }
+      },
     });
-  }
-
-  resetForm() {
-    this.nome = '';
-    this.calorie = null;
-    this.carboidrati = null;
-    this.grassi = null;
-    this.proteine = null;
-    this.acqua = null;
-    this.isModello = false;
   }
 }

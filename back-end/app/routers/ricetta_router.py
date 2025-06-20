@@ -36,10 +36,7 @@ def normalizza_dettagli(raw_dettagli: dict) -> dict:
 
 @router.post("/genera/{schema_id}/{tipo_pasto}", response_model=RicettaOutput)
 async def genera_ricetta(schema_id: int, tipo_pasto: str):
-    if client is None:
-        raise HTTPException(status_code=500, detail="OpenAI client non configurato")
-
-    logger.info(f"🟡 Richiesta generazione ricetta per schema ID={schema_id}, tipo_pasto='{tipo_pasto}'")
+    logger.info(f"🟡 [MOCK] Generazione ricetta per schema ID={schema_id}, tipo_pasto='{tipo_pasto}'")
 
     async with SessionLocal() as session:
         result = await session.execute(
@@ -51,89 +48,94 @@ async def genera_ricetta(schema_id: int, tipo_pasto: str):
             raise HTTPException(status_code=404, detail="Schema non trovato")
 
         schema_data = dict(row._mapping)
-        logger.debug(f"📥 RIGA DB: {schema_data}")
-        nome_schema = schema_data.get("nome", "")
-
         raw_json = schema_data.get("dettagli", "{}")
-        if not raw_json or raw_json.strip() == "":
-            raise HTTPException(status_code=404, detail="Lo schema non contiene dettagli")
-
         try:
             dettagli_raw = json.loads(raw_json)
             dettagli = normalizza_dettagli(dettagli_raw)
-        except Exception as e:
-            logger.error(f"❌ Errore parsing dettagli: {e}")
-            raise HTTPException(status_code=500, detail="Errore nel parsing dei dettagli")
+        except Exception:
+            dettagli = {}
 
-        if tipo_pasto not in dettagli:
-            raise HTTPException(status_code=404, detail=f"Nessun dettaglio per tipo pasto '{tipo_pasto}'")
+        if tipo_pasto not in dettagli or not dettagli[tipo_pasto].opzioni:
+            raise HTTPException(status_code=400, detail=f"Nessuna opzione per il pasto '{tipo_pasto}'")
 
-        opzioni_list = dettagli[tipo_pasto].opzioni
-        logger.info(f"📦 Numero opzioni per '{tipo_pasto}': {len(opzioni_list)}")
+        logger.info("ℹ️ [MOCK] Restituzione ricetta simulata")
 
-        if not isinstance(opzioni_list, list) or len(opzioni_list) == 0:
-            raise HTTPException(status_code=400, detail=f"Nessuna opzione disponibile per il pasto '{tipo_pasto}'")
+        # Ricette mock diverse per tipo pasto
+        ricette_mock = {
+            "colazione": RicettaOutput(
+                titolo="Smoothie proteico",
+                ingredienti=[
+                    {"nome": "Banana", "quantita": "1"},
+                    {"nome": "Latte di mandorla", "quantita": "200ml"},
+                    {"nome": "Proteine in polvere", "quantita": "30g"},
+                    {"nome": "Avena", "quantita": "40g"},
+                ],
+                procedimento="1. Inserisci tutti gli ingredienti nel frullatore.\n2. Frulla fino a ottenere un composto omogeneo.\n3. Servi fresco.",
+                presentazione="Versa in un bicchiere alto con cubetti di ghiaccio.",
+                nota_nutrizionale="Perfetto per iniziare la giornata con energia."
+            ),
+            "spuntino_1": RicettaOutput(
+                titolo="Yogurt con frutta secca",
+                ingredienti=[
+                    {"nome": "Yogurt greco", "quantita": "150g"},
+                    {"nome": "Noci", "quantita": "15g"},
+                    {"nome": "Miele", "quantita": "1 cucchiaino"},
+                ],
+                procedimento="1. Versa lo yogurt in una ciotola.\n2. Aggiungi le noci spezzettate e un filo di miele.\n3. Mescola e gusta.",
+                presentazione="Servi in una coppetta con qualche frutto fresco.",
+                nota_nutrizionale="Spuntino proteico e saziante."
+            ),
+            "pranzo": RicettaOutput(
+                titolo="Insalata di riso integrale e pollo",
+                ingredienti=[
+                    {"nome": "Riso integrale", "quantita": "60g"},
+                    {"nome": "Petto di pollo", "quantita": "150g"},
+                    {"nome": "Pomodorini", "quantita": "50g"},
+                    {"nome": "Zucchine", "quantita": "50g"},
+                ],
+                procedimento="1. Cuoci il riso.\n2. Griglia il pollo e le zucchine.\n3. Unisci tutto in una ciotola con i pomodorini.\n4. Condisci a piacere.\n5. Mescola bene e servi.",
+                presentazione="In una bowl con foglie di basilico fresco.",
+                nota_nutrizionale="Pasto equilibrato per il pranzo."
+            ),
+            "spuntino_2": RicettaOutput(
+                titolo="Barretta energetica casalinga",
+                ingredienti=[
+                    {"nome": "Fiocchi d'avena", "quantita": "50g"},
+                    {"nome": "Burro di arachidi", "quantita": "1 cucchiaio"},
+                    {"nome": "Miele", "quantita": "1 cucchiaino"},
+                    {"nome": "Mandorle", "quantita": "10g"},
+                ],
+                procedimento="1. Mescola tutti gli ingredienti.\n2. Compatta su carta da forno.\n3. Lascia riposare in frigo 2 ore.\n4. Taglia a barrette.\n5. Servi.",
+                presentazione="Avvolgi in carta da forno per uno snack pratico.",
+                nota_nutrizionale="Fonte di energia prima dello sport."
+            ),
+            "pre_intra_post_workout": RicettaOutput(
+                titolo="Frullato pre-workout",
+                ingredienti=[
+                    {"nome": "Banana", "quantita": "1"},
+                    {"nome": "Latte", "quantita": "200ml"},
+                    {"nome": "Miele", "quantita": "1 cucchiaino"},
+                    {"nome": "Proteine in polvere", "quantita": "20g"},
+                ],
+                procedimento="1. Frulla tutti gli ingredienti.\n2. Servi subito.\n3. Consumare 30 minuti prima dell’allenamento.",
+                presentazione="In uno shaker portatile.",
+                nota_nutrizionale="Ideale per fornire energia e amminoacidi."
+            ),
+            "cena": RicettaOutput(
+                titolo="Zuppa di legumi e verdure",
+                ingredienti=[
+                    {"nome": "Lenticchie", "quantita": "80g"},
+                    {"nome": "Carote", "quantita": "50g"},
+                    {"nome": "Sedano", "quantita": "30g"},
+                    {"nome": "Olio extravergine", "quantita": "1 cucchiaino"},
+                ],
+                procedimento="1. Fai un soffritto leggero con olio, carote e sedano.\n2. Aggiungi le lenticchie e acqua.\n3. Cuoci a fuoco lento per 30 minuti.\n4. Regola di sale.\n5. Servi calda.",
+                presentazione="In un piatto fondo con crostini integrali.",
+                nota_nutrizionale="Ricca di fibre e proteine vegetali."
+            ),
+        }
 
-        # Prompt construction
-        prompt_opzioni = []
-        for gruppo in opzioni_list:
-            alimenti = gruppo.alimenti
-            nome_gruppo = (gruppo.nome or "").strip().capitalize()
-            if not alimenti:
-                continue
+        if tipo_pasto not in ricette_mock:
+            raise HTTPException(status_code=400, detail="Tipo pasto non supportato per esempio fittizio.")
 
-            logger.info(f"🧩 Gruppo: {nome_gruppo} – {len(alimenti)} alimenti")
-
-            descrizioni = []
-            for alimento in alimenti:
-                if alimento.macronutriente == "gruppo":
-                    combo = ", ".join(
-                        f"{a.nome} ({a.grammi}g)" for a in (alimento.gruppoAlimenti or [])
-                    )
-                    descrizioni.append(f"{alimento.nome}: {combo}")
-                else:
-                    descrizioni.append(f"{alimento.nome} ({alimento.grammi}g)")
-
-            gruppo_descrizione = f"{nome_gruppo or 'Opzione'}:\n- " + "\n- ".join(descrizioni)
-            prompt_opzioni.append(gruppo_descrizione)
-
-        prompt = (
-            f"Genera una ricetta semplice e bilanciata per il pasto '{tipo_pasto}' "
-            f"basandoti sul seguente schema nutrizionale '{nome_schema}'.\n\n"
-            f"Per ogni gruppo alimentare indicato di seguito, scegli un solo alimento (oppure una combo, se presente):\n\n"
-            + "\n\n".join(prompt_opzioni) +
-            "\n\n"
-            "Scrivi il risultato in formato JSON con questa struttura:\n"
-            "{\n"
-            "  \"titolo\": \"Titolo della ricetta\",\n"
-            "  \"ingredienti\": [{\"nome\": \"Nome alimento\", \"quantita\": \"Quantità\"}, ...],\n"
-            "  \"procedimento\": \"Testo descrittivo (max 5 passaggi)\",\n"
-            "  \"presentazione\": \"Suggerimento su come servire il piatto\",\n"
-            "  \"nota_nutrizionale\": \"(facoltativa) Breve nota nutrizionale\"\n"
-            "}"
-        )
-
-        logger.debug(f"📝 Prompt inviato a GPT:\n{prompt}")
-
-        try:
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=800,
-            )
-            content = response.choices[0].message.content.strip()
-            logger.debug(f"📤 Risposta GPT:\n{content}")
-
-            match = re.search(r"```json\s*(\{.*?\})\s*```", content, re.DOTALL)
-            json_text = match.group(1) if match else content
-            parsed = json.loads(json_text)
-
-            return RicettaOutput(**parsed)
-
-        except json.JSONDecodeError as e:
-            logger.error(f"❌ Errore parsing JSON da GPT: {e.msg}")
-            raise HTTPException(status_code=500, detail="Errore nel parsing della risposta del modello")
-        except Exception as e:
-            logger.error(f"❌ Errore GPT: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Errore nella generazione della ricetta")
-
+        return ricette_mock[tipo_pasto]

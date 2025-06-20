@@ -117,7 +117,6 @@ async def crea_schemi(schemi: List[SchemaNutrizionaleInput]):
     return result
 
 
-
 @router.post("/dati-generali")
 async def salva_dati_generali(payload: dict = Body(...)):
     nome = payload.get("nome")
@@ -126,10 +125,20 @@ async def salva_dati_generali(payload: dict = Body(...)):
     grassi = payload.get("grassi")
     proteine = payload.get("proteine")
     acqua = payload.get("acqua")
-    is_modello = payload.get("is_modello", False)  # ✅
+    is_modello = payload.get("is_modello", False)
+    clona_da = payload.get("clona_da")
 
     if not all([nome, calorie, carboidrati, grassi, proteine, acqua]):
         raise HTTPException(status_code=400, detail="Tutti i campi sono obbligatori")
+
+    dettagli = "{}"
+
+    # Se c'è un modello da cui clonare
+    if clona_da:
+        async with SessionLocal() as session:
+            modello = await session.get(SchemaNutrizionale, clona_da)
+            if modello:
+                dettagli = modello.dettagli or "{}"
 
     async with SessionLocal() as session:
         existing = await session.execute(
@@ -146,6 +155,8 @@ async def salva_dati_generali(payload: dict = Body(...)):
             db_schema.proteine = proteine
             db_schema.acqua = acqua
             db_schema.is_modello = is_modello
+            if clona_da:
+                db_schema.dettagli = dettagli
         else:
             db_schema = SchemaNutrizionale(
                 nome=nome,
@@ -154,8 +165,8 @@ async def salva_dati_generali(payload: dict = Body(...)):
                 grassi=grassi,
                 proteine=proteine,
                 acqua=acqua,
-                is_modello=is_modello,  # ✅
-                dettagli="{}"
+                is_modello=is_modello,
+                dettagli=dettagli,
             )
             session.add(db_schema)
 
@@ -163,6 +174,8 @@ async def salva_dati_generali(payload: dict = Body(...)):
         await session.refresh(db_schema)
 
     return {"status": "ok", "message": "Dati generali salvati con successo"}
+
+
 
 
 @router.post("/dinamico/completo")
