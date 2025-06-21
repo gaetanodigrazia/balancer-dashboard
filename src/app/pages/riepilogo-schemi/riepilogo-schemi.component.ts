@@ -18,6 +18,7 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
   modalInstance: any = null;
   paginaCorrente: string = '';
   loading = false;
+  progress: number = 0;
   schemaDaEliminare: SchemaBrief | null = null;
   modalElimina: any = null;
 
@@ -41,10 +42,8 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
     }
     this.modalInstance = new bootstrap.Modal(document.getElementById('anteprimaModal'));
     this.modalElimina = new bootstrap.Modal(document.getElementById('confermaEliminazioneModal'));
-
   }
 
-  // === ROUTE CHECKS ===
   isFromGestioneSchema(): boolean {
     return this.paginaCorrente.includes('/gestione-schema');
   }
@@ -65,23 +64,44 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
     return this.paginaCorrente.includes('/riepilogo');
   }
 
-  // === LOAD DATA ===
-caricaSchemi() {
-  const isModelli = this.isFromModelli();
+  caricaSchemi() {
+    this.loading = true;
+    this.simulaProgressBar(20000); // 20 secondi
 
-  const apiCall = isModelli
-    ? this.schemaService.getModelli()
-    : this.schemaService.getSchemiDisponibili();
+    const isModelli = this.isFromModelli();
+    const apiCall = isModelli
+      ? this.schemaService.getModelli()
+      : this.schemaService.getSchemiDisponibili();
 
-  apiCall.subscribe({
-    next: (data) => this.schemi = data,
-    error: (err) => {
-      console.error('Errore nel caricamento degli schemi:', err);
-      this.schemi = [];
-    }
-  });
-}
+    apiCall.subscribe({
+      next: (data) => {
+        this.schemi = data;
+        this.loading = false;
+        this.progress = 100; // forza completamento
+      },
+      error: (err) => {
+        console.error('Errore nel caricamento degli schemi:', err);
+        this.schemi = [];
+        this.loading = false;
+        this.progress = 0;
+      }
+    });
+  }
 
+  private simulaProgressBar(durataMs: number) {
+    this.progress = 0;
+    const intervallo = 200;
+    const incrementiTotali = durataMs / intervallo;
+    const incremento = 100 / incrementiTotali;
+
+    const timer = setInterval(() => {
+      if (this.progress >= 100 || !this.loading) {
+        clearInterval(timer);
+      } else {
+        this.progress = Math.min(this.progress + incremento, 100);
+      }
+    }, intervallo);
+  }
 
   seleziona(s: SchemaBrief) {
     this.selectedSchema = s;
@@ -115,23 +135,24 @@ caricaSchemi() {
   modificaPasti(schema: SchemaBrief) {
     this.router.navigate(['/gestione-pasti', schema.id]);
   }
-clonaSchema(schema: SchemaBrief) {
-  if (!confirm(`Vuoi clonare lo schema "${schema.nome}"?`)) return;
 
-  this.loading = true;
-  this.schemaService.clonaSchema(schema.id).subscribe({
-    next: (res) => {
-      this.loading = false;
-      alert(res.message || 'Clonazione completata');
-      this.caricaSchemi();  // Ricarica la tabella aggiornata
-    },
-    error: (err) => {
-      this.loading = false;
-      console.error('Errore durante clonazione:', err);
-      alert('Errore durante la clonazione dello schema.');
-    }
-  });
-}
+  clonaSchema(schema: SchemaBrief) {
+    if (!confirm(`Vuoi clonare lo schema "${schema.nome}"?`)) return;
+
+    this.loading = true;
+    this.schemaService.clonaSchema(schema.id).subscribe({
+      next: (res) => {
+        this.loading = false;
+        alert(res.message || 'Clonazione completata');
+        this.caricaSchemi();
+      },
+      error: (err) => {
+        this.loading = false;
+        console.error('Errore durante clonazione:', err);
+        alert('Errore durante la clonazione dello schema.');
+      }
+    });
+  }
 
   esportaSchemaPdf(schemaBrief: SchemaBrief) {
     this.schemaService.getSchemaById(schemaBrief.id).subscribe({
@@ -274,5 +295,4 @@ clonaSchema(schema: SchemaBrief) {
       }
     });
   }
-
 }
