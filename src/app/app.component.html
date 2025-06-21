@@ -1,99 +1,5 @@
-<style>
-/* Sidebar mobile */
-@media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: -260px;
-    width: 260px;
-    height: 100%;
-    background-color: #fff;
-    border-right: 1px solid #dee2e6;
-    overflow-y: auto;
-    transition: left 0.3s ease;
-    z-index: 1050;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-  }
-
-  .sidebar.show {
-    left: 0;
-  }
-
-  .overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 1040;
-  }
-
-  .overlay.show {
-    display: block;
-  }
-
-  .navbar.d-md-none {
-    z-index: 1065;
-    position: relative;
-  }
-
-  body.sidebar-open {
-    overflow: hidden;
-  }
-}
-
-/* Sidebar nav push down */
-.sidebar .nav {
-  margin-top: 2rem;
-}
-
-/* Sezione titoli nella sidebar */
-.sidebar-section-title {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  color: #6c757d;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  margin-top: 2rem;
-  margin-bottom: 0.5rem;
-  padding-left: 0.25rem;
-  opacity: 0.7;
-  border-bottom: 1px solid #dee2e6;
-}
-
-/* Logo globale */
-.global-logo {
-  height: 64px;
-  background-color: #ecefff;
-  z-index: 1065;
-}
-
-/* Logo desktop sopra la sidebar */
-@media (min-width: 768px) {
-  .global-logo.d-md-flex {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 260px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  }
-
-  .sidebar {
-    margin-top: 64px;
-  }
-
-  .main-content {
-    margin-left: 260px;
-  }
-}
-</style>
-
 <!-- LOGO MOBILE -->
-<div class="global-logo d-flex d-md-none navbar navbar-light bg-light px-3 align-items-center">
+<div class="global-logo d-flex d-md-none navbar navbar-light bg-light px-3 align-items-center" *ngIf="!hideLayout()">
   <button class="btn btn-outline-secondary me-2" (click)="toggleSidebar()">
     &#9776;
   </button>
@@ -101,23 +7,23 @@
 </div>
 
 <!-- LOGO DESKTOP -->
-<div class="global-logo d-none d-md-flex align-items-center px-4 py-3 border-bottom">
+<div class="global-logo d-none d-md-flex align-items-center px-4 py-3 border-bottom" *ngIf="!hideLayout()">
   <span class="fw-bold fs-4">📊 Balancer</span>
 </div>
 
 <!-- Overlay per mobile -->
-<div class="overlay" [class.show]="sidebarOpen" (click)="toggleSidebar()"></div>
+<div class="overlay" [class.show]="sidebarOpen" (click)="toggleSidebar()" *ngIf="!hideLayout()"></div>
 
 <!-- Layout principale -->
 <div class="d-flex" style="height: 100vh;">
   <!-- Sidebar -->
   <div
     class="sidebar p-4 shadow-sm"
+    *ngIf="!hideLayout()"
     [class.d-none]="!sidebarOpen && isMobileView"
     [class.d-md-block]="!isMobileView"
     [class.show]="sidebarOpen"
   >
-    <!-- Sidebar Navigation -->
     <ul class="nav flex-column">
       <p class="sidebar-section-title">Navigazione</p>
       <li class="nav-item mb-2">
@@ -181,6 +87,12 @@
           Esporta
         </a>
       </li>
+<li class="nav-item mt-auto">
+  <button class="btn btn-outline-danger w-100 mt-4" (click)="logout()">
+    Logout
+  </button>
+</li>
+
     </ul>
   </div>
 
