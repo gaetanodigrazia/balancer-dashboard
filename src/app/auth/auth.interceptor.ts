@@ -9,10 +9,14 @@ export class AuthInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = localStorage.getItem('auth_token');
 
+    // ✅ Usa "keysession" come header, come richiesto dal backend FastAPI
     const authReq = token
-      ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+      ? req.clone({
+          setHeaders: { keysession: token }
+        })
       : req;
 
+    // 🔍 Log utile per debug
     console.log('%c➡️ Request:', 'color: blue', {
       url: authReq.url,
       method: authReq.method,

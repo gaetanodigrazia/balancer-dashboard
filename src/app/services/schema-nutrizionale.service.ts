@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { API_BASE_URL } from '../api.config';
+import { AuthService } from '../auth/auth.service';
 
 export interface Alimento {
   nome: string;
@@ -32,20 +33,28 @@ export interface SchemaBrief {
   proteine?: number;
   acqua?: number;
   dettagli?: { [pasto: string]: DettagliPasto };
-  is_global?: boolean; 
-  is_modello?: boolean; 
+  is_global?: boolean;
+  is_modello?: boolean;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class SchemaNutrizionaleService {
-  
+
   private baseUrl = `${API_BASE_URL}/schemi-nutrizionali`;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
 
   schemiDisponibili: SchemaBrief[] = [];
+
+  getSchemiPerUtente(): Observable<SchemaBrief[]> {
+    return this.http.get<SchemaBrief[]>(this.baseUrl);
+  }
+
 
   getSchemiDisponibili(): Observable<SchemaBrief[]> {
     return this.http.get<SchemaBrief[]>(this.baseUrl);
