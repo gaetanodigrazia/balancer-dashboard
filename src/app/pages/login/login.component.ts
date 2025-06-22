@@ -17,22 +17,19 @@ export class LoginComponent {
   constructor(private auth: AuthService, private router: Router) { }
 
 
-login(event?: Event) {
-  if (event) event.preventDefault(); // blocca il submit tradizionale
-this.router.navigate(['/login'], { replaceUrl: true });
+  login(event?: Event) {
+    if (event) event.preventDefault(); // previene il submit classico
 
-  this.auth.login(this.username, this.password).subscribe({
-    next: () => {
-      console.log('✅ Navigo verso home');
-            debugger; // 🔍 Qui controlli che il token sia stato salvato
-
-      this.router.navigate(['/']);
-    },
-    error: () => {
-      alert('Credenziali errate');
-    }
-  });
-}
+    this.auth.login(this.username, this.password).subscribe({
+      next: () => {
+        console.log('✅ Navigo verso home');
+        this.router.navigate(['/']);
+      },
+      error: () => {
+        alert('Credenziali errate');
+      }
+    });
+  }
 
 
 

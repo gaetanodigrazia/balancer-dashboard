@@ -8,7 +8,6 @@ export const authGuard: CanActivateFn = () => {
 
   const authenticated = auth.isAuthenticated();
   console.log('🛡️ authGuard → isAuthenticated:', authenticated);
-  debugger; // 🔍 Qui verifichi se `authStatus` è false e scatta il redirect
 
   if (!authenticated) {
     console.warn('⛔ Non autenticato → redirect /login');
