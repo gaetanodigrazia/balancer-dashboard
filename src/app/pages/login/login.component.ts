@@ -16,13 +16,16 @@ export class LoginComponent {
 
   constructor(private auth: AuthService, private router: Router) {}
 
-  onLogin() {
-    const success = this.auth.login(this.username, this.password);
-
-    if (success) {
-      this.router.navigate(['/']); // oppure qualsiasi pagina post-login
-    } else {
+login() {
+  this.auth.login(this.username, this.password).subscribe({
+    next: () => {
+      this.router.navigate(['/']);
+    },
+    error: () => {
       alert('Credenziali errate');
     }
-  }
+  });
+}
+
+
 }

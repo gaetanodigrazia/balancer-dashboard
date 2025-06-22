@@ -15,7 +15,8 @@ import { GestionePastiComponent } from './components/gestione-pasti/gestione-pas
 import { HomeComponent } from './pages/home/home.component';
 import { EsportaComponent } from './pages/esporta/esporta.component';
 import { GeneraRicetteComponent } from './components/genera-ricette/genera-ricette.component';
-
+import { AuthInterceptor } from '../app/auth/auth.interceptor';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -38,7 +39,9 @@ GeneraRicetteComponent],
         NgChartsModule,
 
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+  ],
   bootstrap: [AppComponent],
   
 })

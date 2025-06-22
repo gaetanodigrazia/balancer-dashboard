@@ -51,6 +51,7 @@ export class InserisciSchemaComponent {
       proteine: this.proteine,
       acqua: this.acqua,
       is_modello: this.isModello,
+      is_global: false
     };
 
     if (this.idModelloOrigine !== null) {

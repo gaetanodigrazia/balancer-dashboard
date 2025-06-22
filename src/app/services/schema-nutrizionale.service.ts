@@ -32,6 +32,8 @@ export interface SchemaBrief {
   proteine?: number;
   acqua?: number;
   dettagli?: { [pasto: string]: DettagliPasto };
+  is_global?: boolean; 
+  is_modello?: boolean; 
 }
 
 @Injectable({

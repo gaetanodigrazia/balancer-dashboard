@@ -1,12 +1,70 @@
-body {
-  background-color: #f8f9fa;
+/* Background pieno schermo */
+.login-background {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef1f5, #dce3ea);
+  padding: 1rem;
 }
 
-.card {
-  border-radius: 1rem;
+/* Card del form */
+.login-card {
+  background-color: #ffffffcc; /* semi-trasparente per effetto soft */
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  text-align: center;
 }
 
-input:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+/* Titolo */
+.login-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #1a1a1a;
+}
+
+/* Campi input */
+.login-input {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+/* Bottone */
+.login-button {
+  padding: 0.75rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-button:hover {
+  background-color: #0056b3;
+}
+
+/* Hint sotto */
+.login-hint {
+  font-size: 0.85rem;
+  color: #555;
 }
