@@ -1,47 +1,53 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, HostListener, OnInit } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { AuthService } from './auth/auth.service';
 
 @Component({
   selector: 'app-root',
-  templateUrl: './app.component.html',
+  templateUrl: './app.component.html'
 })
 export class AppComponent implements OnInit {
-  formData: any = {};
-  sidebarOpen: boolean = false;
-  isMobileView: boolean = false;
+  isMobileView = false;
+  sidebarOpen = false;
 
-  constructor(public router: Router, private authService: AuthService) { }
+  constructor(public authService: AuthService, private router: Router) {}
 
-ngOnInit(): void {
-  this.checkWindowSize();
-  window.addEventListener('resize', this.checkWindowSize.bind(this));
+  ngOnInit(): void {
+    this.checkViewport();
 
-  // Forza redirect se non autenticato
-  if (!this.authService.isAuthenticated() && this.router.url !== '/login') {
-    this.router.navigate(['/login']);
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        const url = event.urlAfterRedirects || event.url;
+        const isAuth = this.authService.isAuthenticated();
+        console.log("🔄 NavigationEnd →", url, "isAuthenticated:", isAuth);
+
+        if (!isAuth && url !== '/login') {
+          console.log("⛔ Blocco accesso, redirect forzato");
+          this.router.navigate(['/login'], { replaceUrl: true });
+        }
+      }
+    });
   }
+
+  @HostListener('window:resize')
+  checkViewport() {
+    this.isMobileView = window.innerWidth < 768;
+    if (!this.isMobileView) {
+      this.sidebarOpen = true;
+    }
+  }
+
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+logout() {
+  console.log('📌 logout() chiamato');
+  this.authService.logout(); // anche se non svuota, vogliamo solo confermare l'esecuzione
 }
 
 
-  updateData(partial: any): void {
-    this.formData = { ...this.formData, ...partial };
-  }
-
-  checkWindowSize(): void {
-    this.isMobileView = window.innerWidth < 768;
-  }
-
-  toggleSidebar(): void {
-    this.sidebarOpen = !this.sidebarOpen;
-    document.body.classList.toggle('sidebar-open', this.sidebarOpen);
-  }
   hideLayout(): boolean {
-    // Aggiungi altre rotte se vuoi escludere anche registrazione, ecc.
     return this.router.url === '/login';
-  }
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
   }
 }

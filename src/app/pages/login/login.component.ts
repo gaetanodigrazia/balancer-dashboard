@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../auth/auth.service'; // 👈 importa il servizio
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -16,15 +16,23 @@ export class LoginComponent {
 
   constructor(private auth: AuthService, private router: Router) { }
 
-  login() {
-    this.auth.login(this.username, this.password).subscribe({
-      next: () => {
-        // Forza reload completo per assicurare che authGuard veda il token
-        window.location.href = '/';
-      },
-      error: () => {
-        alert('Credenziali errate');
-      }
-    });
-  }
+
+login(event?: Event) {
+  if (event) event.preventDefault(); // blocca il submit tradizionale
+this.router.navigate(['/login'], { replaceUrl: true });
+
+  this.auth.login(this.username, this.password).subscribe({
+    next: () => {
+      console.log('✅ Navigo verso home');
+      this.router.navigate(['/']);
+    },
+    error: () => {
+      alert('Credenziali errate');
+    }
+  });
+}
+
+
+
+
 }

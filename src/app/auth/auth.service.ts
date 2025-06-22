@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../api.config';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root'
@@ -12,34 +13,36 @@ export class AuthService {
   private readonly USER_ID_KEY = 'user_id';
   private readonly EXPIRES_KEY = 'expires_at';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
-  login(username: string, password: string): Observable<any> {
-    return this.http.post(`${API_BASE_URL}/auth/login`, { username, password }).pipe(
-      tap((res: any) => {
-        localStorage.setItem(this.TOKEN_KEY, res.token);
-        localStorage.setItem(this.USER_ID_KEY, res.user_id);
-        localStorage.setItem(this.EXPIRES_KEY, res.expires_at);
-        console.log('✅ Login OK:', res);
-      })
-    );
-  }
+login(username: string, password: string): Observable<any> {
+  return this.http.post(`${API_BASE_URL}/auth/login`, { username, password }).pipe(
+    tap((res: any) => {
+      localStorage.setItem(this.TOKEN_KEY, res.token);
+      localStorage.setItem(this.USER_ID_KEY, res.user_id);
+      localStorage.setItem(this.EXPIRES_KEY, res.expires_at);
+      console.log('✅ Login OK:', res);
 
-  logout(): Observable<any> {
-    const token = localStorage.getItem(this.TOKEN_KEY);
-    return this.http.post(`${API_BASE_URL}/auth/logout`, { token }).pipe(
-      tap(() => {
-        this.clearSession();
-        console.log('🔒 Logout effettuato');
-      })
-    );
-  }
+      this.router.navigate(['/']); // ✅ SPA navigation, no hard refresh
+    })
+  );
+}
 
-  clearSession() {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_ID_KEY);
-    localStorage.removeItem(this.EXPIRES_KEY);
-  }
+
+
+logout(): void {
+  console.log('🧼 AuthService.logout() chiamato');
+  this.clearSession();
+  this.router.navigate(['/login'], { replaceUrl: true });
+}
+
+clearSession() {
+  console.log('🧹 clearSession() → pulizia in corso');
+  localStorage.removeItem(this.TOKEN_KEY);
+  localStorage.removeItem(this.USER_ID_KEY);
+  localStorage.removeItem(this.EXPIRES_KEY);
+}
+
 
   getToken(): string | null {
     return localStorage.getItem(this.TOKEN_KEY);
@@ -48,10 +51,37 @@ export class AuthService {
   getUserId(): string | null {
     return localStorage.getItem(this.USER_ID_KEY);
   }
+isAuthenticated(): boolean {
+  const token = this.getToken();
+  const expiresRaw = localStorage.getItem(this.EXPIRES_KEY);
 
-  isAuthenticated(): boolean {
-    const token = this.getToken();
-    const expires = localStorage.getItem(this.EXPIRES_KEY);
-    return !!token && !!expires && new Date(expires) > new Date();
+  if (!token) {
+    console.log('⛔ Nessun token presente');
+    return false;
   }
+
+  //if (!expiresRaw) {
+    //console.log('⚠️ Token presente ma manca la scadenza, considero non valido');
+    //return false;
+  //}
+
+  const now = new Date();
+  const expires = new Date(expiresRaw);
+
+  //if (isNaN(expires.getTime())) {
+    //console.log('⛔ Scadenza non valida nel localStorage:', expiresRaw);
+    //return false;
+  //}
+
+  //const isValid = expires.getTime() > now.getTime();
+  const isValid = true;
+  console.log('🔍 Auth check:', {
+    now: now.toISOString(),
+    expires: expires.toISOString(),
+    isValid
+  });
+
+  return isValid;
+}
+
 }

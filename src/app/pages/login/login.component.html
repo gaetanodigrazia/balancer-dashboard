@@ -1,5 +1,5 @@
 <div class="login-background">
-  <form class="login-card" (ngSubmit)="login()" #loginForm="ngForm">
+  <div class="login-card">
     <h2>🔐 Accedi a <strong>Balancer</strong></h2>
 
     <input
@@ -20,6 +20,6 @@
       class="login-input"
     />
 
-    <button type="submit" class="login-button">Accedi</button>
-  </form>
+    <button type="button" (click)="login()" class="login-button">Accedi</button>
+  </div>
 </div>
