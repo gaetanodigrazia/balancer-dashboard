@@ -14,18 +14,17 @@ export class LoginComponent {
   username = '';
   password = '';
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
-login() {
-  this.auth.login(this.username, this.password).subscribe({
-    next: () => {
-      this.router.navigate(['/']);
-    },
-    error: () => {
-      alert('Credenziali errate');
-    }
-  });
-}
-
-
+  login() {
+    this.auth.login(this.username, this.password).subscribe({
+      next: () => {
+        // Forza reload completo per assicurare che authGuard veda il token
+        window.location.href = '/';
+      },
+      error: () => {
+        alert('Credenziali errate');
+      }
+    });
+  }
 }
