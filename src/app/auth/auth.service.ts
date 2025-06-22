@@ -54,6 +54,7 @@ clearSession() {
 isAuthenticated(): boolean {
   const token = this.getToken();
   const expiresRaw = localStorage.getItem(this.EXPIRES_KEY);
+  debugger; // 🔍 Qui controlli subito cosa c'è nello storage
 
   if (!token) {
     console.log('⛔ Nessun token presente');
@@ -80,6 +81,7 @@ isAuthenticated(): boolean {
     expires: expires.toISOString(),
     isValid
   });
+  debugger; // 🔍 Qui controlli se `isValid` è davvero true o false
 
   return isValid;
 }
