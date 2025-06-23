@@ -45,48 +45,49 @@
     </tr>
   </thead>
 
-  <tbody>
-    <tr *ngFor="let schema of schemi" [class.table-primary]="schema === selectedSchema">
-      <td><strong>{{ schema.nome }}</strong></td>
-      <td>{{ schema.calorie | number:'1.0-2' }}</td>
-      <td>{{ schema.carboidrati | number:'1.0-2' }}</td>
-      <td>{{ schema.grassi | number:'1.0-2' }}</td>
-      <td>{{ schema.proteine | number:'1.0-2' }}</td>
-      <td>{{ schema.acqua | number:'1.0-2' }}</td>
+<tbody>
+  <tr *ngFor="let schema of schemi" [class.table-primary]="schema === selectedSchema">
+    <td data-label="Nome Schema"><strong>{{ schema.nome }}</strong></td>
+    <td data-label="Calorie">{{ schema.calorie | number:'1.0-2' }}</td>
+    <td data-label="Carboidrati (g)">{{ schema.carboidrati | number:'1.0-2' }}</td>
+    <td data-label="Grassi (g)">{{ schema.grassi | number:'1.0-2' }}</td>
+    <td data-label="Proteine (g)">{{ schema.proteine | number:'1.0-2' }}</td>
+    <td data-label="Acqua (L)">{{ schema.acqua | number:'1.0-2' }}</td>
 
-      <!-- /modelli -->
-      <td *ngIf="isFromModelli()">
-        <button class="btn btn-sm btn-warning" (click)="modificaSchema(schema)">Modifica</button>
-      </td>
-      <td *ngIf="isFromModelli()">
-        <button class="btn btn-sm btn-danger" (click)="apriModaleEliminazione(schema)">Elimina</button>
-      </td>
-      <td *ngIf="isFromModelli()">
-        <button class="btn btn-sm btn-success" (click)="clonaSchema(schema)">Clona</button>
-      </td>
+    <!-- /modelli -->
+    <td *ngIf="isFromModelli()" data-label="Modifica">
+      <button class="btn btn-sm btn-warning" (click)="modificaSchema(schema)">Modifica</button>
+    </td>
+    <td *ngIf="isFromModelli()" data-label="Elimina">
+      <button class="btn btn-sm btn-danger" (click)="apriModaleEliminazione(schema)">Elimina</button>
+    </td>
+    <td *ngIf="isFromModelli()" data-label="Clona">
+      <button class="btn btn-sm btn-success" (click)="clonaSchema(schema)">Clona</button>
+    </td>
 
-      <!-- /gestione-schema -->
-      <td *ngIf="isFromGestioneSchema()">
-        <button class="btn btn-sm btn-warning" (click)="modificaSchema(schema)">Modifica</button>
-      </td>
-      <td *ngIf="isFromGestioneSchema()">
-        <button class="btn btn-sm btn-danger" (click)="apriModaleEliminazione(schema)">Elimina</button>
-      </td>
+    <!-- /gestione-schema -->
+    <td *ngIf="isFromGestioneSchema()" data-label="Modifica">
+      <button class="btn btn-sm btn-warning" (click)="modificaSchema(schema)">Modifica</button>
+    </td>
+    <td *ngIf="isFromGestioneSchema()" data-label="Elimina">
+      <button class="btn btn-sm btn-danger" (click)="apriModaleEliminazione(schema)">Elimina</button>
+    </td>
 
-      <!-- /gestione-pasti -->
-      <td *ngIf="isFromGestionePasti()">
-        <button class="btn btn-sm btn-info" (click)="modificaPasti(schema)">Modifica Pasti</button>
-      </td>
+    <!-- /gestione-pasti -->
+    <td *ngIf="isFromGestionePasti()" data-label="Pasti">
+      <button class="btn btn-sm btn-info" (click)="modificaPasti(schema)">Modifica Pasti</button>
+    </td>
 
-      <!-- /esporta -->
-      <td *ngIf="isFromEsporta()">
-        <button class="btn btn-sm btn-secondary" (click)="esportaSchemaPdf(schema)">Esporta PDF</button>
-      </td>
-      <td *ngIf="isFromEsporta()">
-        <button class="btn btn-sm btn-outline-primary" (click)="mostraAnteprima(schema)">Anteprima</button>
-      </td>
-    </tr>
-  </tbody>
+    <!-- /esporta -->
+    <td *ngIf="isFromEsporta()" data-label="Esporta PDF">
+      <button class="btn btn-sm btn-secondary" (click)="esportaSchemaPdf(schema)">Esporta PDF</button>
+    </td>
+    <td *ngIf="isFromEsporta()" data-label="Anteprima">
+      <button class="btn btn-sm btn-outline-primary" (click)="mostraAnteprima(schema)">Anteprima</button>
+    </td>
+  </tr>
+</tbody>
+
 </table>
 
 <!-- Modale Anteprima -->

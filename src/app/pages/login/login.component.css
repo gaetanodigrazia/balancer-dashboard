@@ -68,3 +68,55 @@
   font-size: 0.85rem;
   color: #555;
 }
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+.tab-switch {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tab-switch button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #aaa;
+  background: #f0f0f0;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.tab-switch button.active {
+  background: #333;
+  color: white;
+  border-color: #333;
+}
+
+.login-input {
+  display: block;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  font-size: 1rem;
+  box-sizing: border-box;
+}

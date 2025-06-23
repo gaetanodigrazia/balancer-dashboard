@@ -1,25 +1,61 @@
 <div class="login-background">
   <div class="login-card">
-    <h2>🔐 Accedi a <strong>Balancer</strong></h2>
+    <h2><strong>Balancer</strong></h2>
 
-    <input
-      type="text"
-      [(ngModel)]="username"
-      name="username"
-      placeholder="Username"
-      required
-      class="login-input"
-    />
+    <!-- Tab Switch -->
+    <div class="tab-switch">
+      <button
+        [class.active]="activeTab === 'login'"
+        (click)="activeTab = 'login'"
+      >
+        🔐 Login
+      </button>
+      <button
+        [class.active]="activeTab === 'demo'"
+        (click)="activeTab = 'demo'"
+      >
+        🧪 Demo
+      </button>
+    </div>
 
-    <input
-      type="password"
-      [(ngModel)]="password"
-      name="password"
-      placeholder="Password"
-      required
-      class="login-input"
-    />
+    <!-- LOGIN FORM -->
+    <div *ngIf="activeTab === 'login'" class="login-tab">
+      <input
+        type="text"
+        [(ngModel)]="username"
+        placeholder="Username"
+        class="login-input"
+      />
+      <input
+        type="password"
+        [(ngModel)]="password"
+        placeholder="Password"
+        class="login-input"
+      />
+      <button (click)="login()" class="login-button">Accedi</button>
+    </div>
 
-    <button type="button" (click)="login()" class="login-button">Accedi</button>
+    <!-- DEMO TAB -->
+    <div *ngIf="activeTab === 'demo'" class="demo-tab">
+      <button (click)="registerDemo()" class="login-button">
+        Genera utente demo
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div *ngIf="showModal" class="modal-backdrop">
+    <div class="modal-content">
+      <h3>🎉 Utente demo generato!</h3>
+      <p><strong>Username:</strong> {{ generatedCredentials?.username }}</p>
+      <p><strong>Password:</strong> {{ generatedCredentials?.password }}</p>
+      <p class="small">Copia queste credenziali e usale nel tab Login.</p>
+      <button (click)="closeModal()" class="login-button">OK</button>
+    </div>
   </div>
 </div>
+
+<p style="text-align: center; margin-top: 1rem;">
+  🔄 Tab attivo: {{ activeTab }}
+</p>
+
