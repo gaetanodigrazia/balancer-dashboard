@@ -46,8 +46,6 @@ export class LoginComponent {
     });
   }
 
-// login.component.ts
-
 registerDemo() {
   console.log('[registerDemo] Cliccato');
 

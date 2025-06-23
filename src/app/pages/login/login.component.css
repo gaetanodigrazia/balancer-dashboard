@@ -1,122 +1,111 @@
-/* Background pieno schermo */
-.login-background {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #eef1f5, #dce3ea);
-  padding: 1rem;
+
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
-/* Card del form */
-.login-card {
-  background-color: #ffffffcc; /* semi-trasparente per effetto soft */
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  width: 100%;
-  max-width: 400px;
+/* Sfondo a tutto schermo */
+.login-wrapper {
+  min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to bottom right, #f4f7fb, #dfe8f3);
+}
+
+/* Card di login */
+.login-container {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  width: 90%;
+  max-width: 400px;
   text-align: center;
 }
 
-/* Titolo */
-.login-card h2 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #1a1a1a;
+/* Tab di selezione */
+.tab-group {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  gap: 0.5rem;
 }
 
-/* Campi input */
-.login-input {
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
+.tab-group button {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  background: white;
+  cursor: pointer;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: background 0.3s;
+}
+
+.tab-group button.active {
+  background: #222;
+  color: white;
+  border-color: #222;
+}
+
+/* Input */
+input {
+  width: 100%;
+  padding: 0.6rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
   border: 1px solid #ccc;
   font-size: 1rem;
-  transition: border-color 0.2s;
+}
+
+/* Bottone principale */
+button.primary {
   width: 100%;
-  box-sizing: border-box;
-}
-
-.login-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-/* Bottone */
-.login-button {
-  padding: 0.75rem;
-  background-color: #007bff;
+  background: #007bff;
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 0.7rem;
+  border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
-.login-button:hover {
-  background-color: #0056b3;
-}
-
-/* Hint sotto */
-.login-hint {
-  font-size: 0.85rem;
-  color: #555;
-}
-
+/* MODAL */
 .modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
-  align-items: center;
   justify-content: center;
-  z-index: 1000;
+  align-items: center;
+  z-index: 999;
 }
 
 .modal-content {
   background: white;
   padding: 2rem;
-  border-radius: 1rem;
-  max-width: 400px;
+  border-radius: 12px;
+  max-width: 360px;
   width: 90%;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
   text-align: center;
 }
 
-.tab-switch {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.tab-switch button {
-  padding: 0.5rem 1rem;
-  border: 1px solid #aaa;
-  background: #f0f0f0;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.tab-switch button.active {
-  background: #333;
+.login-button {
+  margin-top: 1rem;
+  background: #007bff;
   color: white;
-  border-color: #333;
-}
-
-.login-input {
-  display: block;
-  width: 100%;
-  margin: 0.5rem 0;
-  padding: 0.5rem;
-  font-size: 1rem;
-  box-sizing: border-box;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
 }

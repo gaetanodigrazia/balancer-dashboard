@@ -1,9 +1,10 @@
-<div class="login-background">
-  <div class="login-card">
-    <h2><strong>Balancer</strong></h2>
+<div class="login-wrapper">
+  <!-- Contenitore Login -->
+  <div class="login-container">
+    <h2>Balancer</h2>
 
-    <!-- Tab Switch -->
-    <div class="tab-switch">
+    <!-- Tab Login / Demo -->
+    <div class="tab-group">
       <button
         [class.active]="activeTab === 'login'"
         (click)="activeTab = 'login'"
@@ -14,31 +15,33 @@
         [class.active]="activeTab === 'demo'"
         (click)="activeTab = 'demo'"
       >
-        🧪 Demo
+        ✏️ Demo
       </button>
     </div>
 
-    <!-- LOGIN FORM -->
-    <div *ngIf="activeTab === 'login'" class="login-tab">
+    <!-- Form login -->
+    <form *ngIf="activeTab === 'login'" (submit)="login($event)">
       <input
         type="text"
-        [(ngModel)]="username"
         placeholder="Username"
-        class="login-input"
+        [(ngModel)]="username"
+        name="username"
+        required
       />
       <input
         type="password"
-        [(ngModel)]="password"
         placeholder="Password"
-        class="login-input"
+        [(ngModel)]="password"
+        name="password"
+        required
       />
-      <button (click)="login()" class="login-button">Accedi</button>
-    </div>
+      <button type="submit" class="primary">Accedi</button>
+    </form>
 
-    <!-- DEMO TAB -->
-    <div *ngIf="activeTab === 'demo'" class="demo-tab">
-      <button (click)="registerDemo()" class="login-button">
-        Genera utente demo
+    <!-- Tab demo -->
+    <div *ngIf="activeTab === 'demo'">
+      <button (click)="registerDemo()" class="primary">
+        Crea utente demo
       </button>
     </div>
   </div>
@@ -49,13 +52,10 @@
       <h3>🎉 Utente demo generato!</h3>
       <p><strong>Username:</strong> {{ generatedCredentials?.username }}</p>
       <p><strong>Password:</strong> {{ generatedCredentials?.password }}</p>
-      <p class="small">Copia queste credenziali e usale nel tab Login.</p>
+      <p class="small">
+        Copia queste credenziali e usale nel tab <strong>Login</strong>.
+      </p>
       <button (click)="closeModal()" class="login-button">OK</button>
     </div>
   </div>
 </div>
-
-<p style="text-align: center; margin-top: 1rem;">
-  🔄 Tab attivo: {{ activeTab }}
-</p>
-
