@@ -27,12 +27,12 @@ export class AuthService {
     );
   }
 
-registerDemo(): Observable<{ username: string; password: string }> {
-  return this.http.post<{ username: string; password: string }>(
-    `${API_BASE_URL}/auth/demo-login`,
-    {}
-  );
-}
+  registerDemo(): Observable<{ username: string; password: string }> {
+    return this.http.post<{ username: string; password: string }>(
+      `${API_BASE_URL}/auth/demo-login`,
+      {}
+    );
+  }
 
 
 
@@ -91,5 +91,14 @@ registerDemo(): Observable<{ username: string; password: string }> {
 
     return isValid;
   }
+  getCurrentUser(): Observable<any> {
+    const token = this.getToken();
+    console.log('🔍 Chiamata getCurrentUser() in corso');
 
+    return this.http.get<any>(`${API_BASE_URL}/utenti/utente`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 }

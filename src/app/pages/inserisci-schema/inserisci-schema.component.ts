@@ -1,12 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { AuthService } from 'src/app/auth/auth.service';
 import { SchemaBrief, SchemaNutrizionaleService } from 'src/app/services/schema-nutrizionale.service';
+import { UtilsService } from 'src/app/services/utils.service'; // ✅ nuovo import
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-inserisci-schema',
   templateUrl: './inserisci-schema.component.html',
   styleUrls: ['./inserisci-schema.component.css']
 })
-export class InserisciSchemaComponent {
+export class InserisciSchemaComponent implements OnInit {
   nome = '';
   calorie = 0;
   carboidrati = 0;
@@ -17,14 +20,54 @@ export class InserisciSchemaComponent {
   loading = false;
   message = '';
   error = '';
+  isDemo = false;
+
+  ts: string = '';
+  sig: string = '';
 
   modelliDisponibili: SchemaBrief[] = [];
   idModelloOrigine: number | null = null;
 
-  constructor(private schemaService: SchemaNutrizionaleService) {}
+  constructor(
+    private schemaService: SchemaNutrizionaleService,
+    private authService: AuthService,
+    private utilsService: UtilsService // ✅ nuovo
+  ) { }
 
   ngOnInit(): void {
     this.caricaModelli();
+    this.authService.getCurrentUser().subscribe({
+      next: (user) => {
+        this.isDemo = user.is_demo;
+
+        if (this.isDemo) {
+
+          this.utilsService.generaTokenFirmato().subscribe({
+            next: ({ ts, sig }) => {
+              this.ts = ts;
+              this.sig = sig;
+              this.nome = `Demo - ${ts}`;  // Mostra il token nel campo nome
+              console.log('🔐 Token demo ricevuto', { ts, sig });
+            },
+            error: () => {
+              console.error('❌ Errore nel recupero token demo');
+            }
+          });
+
+
+          setTimeout(() => {
+            const demoModal = document.getElementById('demoModal');
+            if (demoModal) {
+              const modalInstance = new bootstrap.Modal(demoModal);
+              modalInstance.show();
+            }
+          }, 300);
+        }
+      },
+      error: (err) => {
+        console.warn('Errore nel recupero dell’utente:', err);
+      }
+    });
   }
 
   caricaModelli(): void {
@@ -55,10 +98,14 @@ export class InserisciSchemaComponent {
     };
 
     if (this.idModelloOrigine !== null) {
-      payload.clona_da = Number(this.idModelloOrigine); // ✅ conversione forzata a number
+      payload.clona_da = Number(this.idModelloOrigine);
     }
 
-    console.log('📤 Payload inviato:', payload);
+    // ✅ Se è demo, aggiungi ts e sig
+    if (this.isDemo) {
+      payload.ts = this.ts;
+      payload.sig = this.sig;
+    }
 
     this.schemaService.salvaDatiGenerali(payload).subscribe({
       next: () => {
