@@ -13,6 +13,7 @@ declare var bootstrap: any;
 })
 export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
   schemi: SchemaBrief[] = [];
+  schemiGlobali: SchemaBrief[] = []; // ✅ aggiunto
   selectedSchema: SchemaBrief | null = null;
   anteprimaSchema: any = null;
   modalInstance: any = null;
@@ -33,6 +34,7 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.paginaCorrente = this.router.url;
     this.caricaSchemi();
+    this.caricaSchemiGlobali(); // ✅ aggiunto
   }
 
   ngAfterViewInit(): void {
@@ -66,7 +68,7 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
 
   caricaSchemi() {
     this.loading = true;
-    this.simulaProgressBar(20000); // 20 secondi
+    this.simulaProgressBar(20000);
 
     const isModelli = this.isFromModelli();
     const apiCall = isModelli
@@ -77,13 +79,23 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
       next: (data) => {
         this.schemi = data;
         this.loading = false;
-        this.progress = 100; // forza completamento
+        this.progress = 100;
       },
       error: (err) => {
         console.error('Errore nel caricamento degli schemi:', err);
         this.schemi = [];
         this.loading = false;
         this.progress = 0;
+      }
+    });
+  }
+
+  caricaSchemiGlobali() {
+    this.schemaService.getSchemiGlobali().subscribe({
+      next: (data) => this.schemiGlobali = data,
+      error: (err) => {
+        console.error('Errore nel caricamento degli schemi globali:', err);
+        this.schemiGlobali = [];
       }
     });
   }

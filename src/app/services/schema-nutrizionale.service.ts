@@ -114,4 +114,10 @@ export class SchemaNutrizionaleService {
       tap((res) => console.log('✅ Modelli caricati:', res))
     );
   }
+
+  getSchemiGlobali() {
+  return this.http.get<SchemaBrief[]>(`${this.baseUrl}/schema/globali`).pipe(
+    tap(res => console.log('🔍 Risposta cruda schemi globali:', res)));
+}
+
 }
