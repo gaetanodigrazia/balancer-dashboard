@@ -1,44 +1,16 @@
-/* MOBILE SIDEBAR */
+/* Mobile */
 @media (max-width: 768px) {
   .sidebar-mobile {
-    position: absolute;
-    top: 56px; /* altezza navbar mobile */
+    position: fixed;
+    top: 56px; /* altezza navbar */
     left: 0;
-    right: 0;
+    width: 100%;
     background-color: #f8f9fa;
     z-index: 1050;
-    display: none;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    animation: slideDown 0.25s ease-out;
   }
 
-  .sidebar-open {
-    display: block;
-  }
-
-  .overlay {
-    background-color: rgba(0, 0, 0, 0.3);
-    position: fixed;
-    top: 56px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1040;
-    display: none;
-  }
-
-  .overlay.show {
-    display: block;
-  }
-
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .main-content {
+    margin-top: 56px;
   }
 }

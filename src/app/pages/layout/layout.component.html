@@ -1,63 +1,57 @@
-<!-- layout.component.html -->
-
-<!-- LOGO MOBILE -->
-<div class="global-logo d-flex d-md-none navbar navbar-light bg-light px-3 align-items-center">
-  <button class="btn btn-outline-secondary me-2" (click)="toggleSidebar()">
-    &#9776;
-  </button>
+<!-- Navbar mobile -->
+<div class="navbar navbar-light bg-light px-3 d-md-none justify-content-between align-items-center">
+  <button class="btn btn-outline-secondary" (click)="toggleSidebar()">&#9776;</button>
   <span class="fw-bold fs-5">📊 Balancer</span>
 </div>
 
-<!-- LOGO DESKTOP -->
+<!-- Navbar desktop -->
 <div class="global-logo d-none d-md-flex align-items-center px-4 py-3 border-bottom">
   <span class="fw-bold fs-4">📊 Balancer</span>
 </div>
 
-<!-- Overlay per mobile -->
-<div class="overlay" [class.show]="sidebarOpen && isMobileView" (click)="toggleSidebar()"></div>
+<!-- Mobile Sidebar -->
+<div class="sidebar-mobile bg-light shadow-sm" *ngIf="sidebarOpen && isMobileView">
+  <ul class="nav flex-column p-3">
+    <li class="nav-item mb-2">
+      <a routerLink="/home" class="nav-link" (click)="toggleSidebar()">🏠 Home</a>
+    </li>
+    <li class="nav-item mb-2">
+      <a routerLink="/riepilogo" class="nav-link" (click)="toggleSidebar()">📊 Riepilogo</a>
+    </li>
+    <li class="nav-item mb-2">
+      <a routerLink="/modelli" class="nav-link" (click)="toggleSidebar()">📂 Modelli</a>
+    </li>
+    <li class="nav-item mb-2">
+      <a routerLink="/inserisci" class="nav-link" (click)="toggleSidebar()">➕ Inserisci</a>
+    </li>
+    <li class="nav-item mb-2">
+      <a routerLink="/gestione-schema" class="nav-link" (click)="toggleSidebar()">🧩 Gestione Schema</a>
+    </li>
+    <li class="nav-item mb-2">
+      <a routerLink="/gestione-pasti" class="nav-link" (click)="toggleSidebar()">🍴 Gestione Pasti</a>
+    </li>
+    <li class="nav-item mb-2">
+      <a routerLink="/esporta" class="nav-link" (click)="toggleSidebar()">📤 Esporta</a>
+    </li>
+    <li class="nav-item mt-3">
+      <button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button>
+    </li>
+  </ul>
+</div>
 
 <!-- Layout principale -->
 <div class="d-flex flex-column flex-md-row" style="min-height: 100vh;">
-  <!-- Sidebar -->
-  <div class="sidebar"
-       [class.sidebar-mobile]="isMobileView"
-       [class.sidebar-open]="sidebarOpen && isMobileView"
-       [class.d-none]="!sidebarOpen && isMobileView"
-       [class.d-md-block]="!isMobileView">
-    <ul class="nav flex-column p-4">
-      <p class="sidebar-section-title">Navigazione</p>
-      <li class="nav-item mb-2">
-        <a routerLink="/home" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
-           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Home</a>
-      </li>
-      <p class="sidebar-section-title">Schemi</p>
-      <li class="nav-item mb-2">
-        <a routerLink="/riepilogo" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
-           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Riepilogo</a>
-      </li>
-      <li class="nav-item mb-2">
-        <a routerLink="/modelli" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
-           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Modelli</a>
-      </li>
-      <li class="nav-item mb-2">
-        <a routerLink="/inserisci" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
-           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Inserisci schema</a>
-      </li>
-      <li class="nav-item mb-2">
-        <a routerLink="/gestione-schema" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
-           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Gestione Schema</a>
-      </li>
-      <li class="nav-item mb-2">
-        <a routerLink="/gestione-pasti" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
-           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Gestione Pasti</a>
-      </li>
-      <li class="nav-item mb-2">
-        <a routerLink="/esporta" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
-           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Esporta</a>
-      </li>
-      <li class="nav-item mt-auto">
-        <button class="btn btn-outline-danger w-100 mt-4" (click)="logout()">Logout</button>
-      </li>
+  <!-- Sidebar desktop -->
+  <div class="sidebar d-none d-md-block p-4 border-end" style="min-width: 250px;">
+    <ul class="nav flex-column">
+      <li class="nav-item mb-2"><a routerLink="/home" class="nav-link">🏠 Home</a></li>
+      <li class="nav-item mb-2"><a routerLink="/riepilogo" class="nav-link">📊 Riepilogo</a></li>
+      <li class="nav-item mb-2"><a routerLink="/modelli" class="nav-link">📂 Modelli</a></li>
+      <li class="nav-item mb-2"><a routerLink="/inserisci" class="nav-link">➕ Inserisci</a></li>
+      <li class="nav-item mb-2"><a routerLink="/gestione-schema" class="nav-link">🧩 Gestione Schema</a></li>
+      <li class="nav-item mb-2"><a routerLink="/gestione-pasti" class="nav-link">🍴 Gestione Pasti</a></li>
+      <li class="nav-item mb-2"><a routerLink="/esporta" class="nav-link">📤 Esporta</a></li>
+      <li class="nav-item mt-4"><button class="btn btn-outline-danger w-100" (click)="logout()">Logout</button></li>
     </ul>
   </div>
 

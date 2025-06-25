@@ -11,7 +11,7 @@ import { AuthService } from 'src/app/auth/auth.service';
   styleUrls: ['./layout.component.css']
 })
 export class LayoutComponent {
-  sidebarOpen = false;
+ sidebarOpen = false;
   isMobileView = window.innerWidth < 768;
 
   constructor(public authService: AuthService, private router: Router) {}
@@ -23,6 +23,7 @@ export class LayoutComponent {
   @HostListener('window:resize')
   onResize() {
     this.isMobileView = window.innerWidth < 768;
+    if (!this.isMobileView) this.sidebarOpen = false;
   }
 
   ngOnInit() {
@@ -30,7 +31,6 @@ export class LayoutComponent {
   }
 
   logout() {
-    console.log('📌 logout() chiamato');
     this.authService.logout();
   }
 }
