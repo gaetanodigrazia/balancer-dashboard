@@ -10,7 +10,7 @@ import { filter, distinctUntilChanged } from 'rxjs/operators';
 })
 export class GestionePastiComponent implements OnInit {
   schema!: SchemaBrief;
-     isDemo = false;
+  isDemo = false;
   dettagliPasti: { [tipoPasto: string]: DettagliPasto } = {};
 
   tipiPasto: string[] = [
@@ -27,19 +27,19 @@ export class GestionePastiComponent implements OnInit {
   error: string | null = null;
   opzioneDaEliminare: { tipoPasto: string; opzioneId: string } | null = null;
 
-constructor(
-  private schemaService: SchemaNutrizionaleService,
-  private route: ActivatedRoute
-) {}
+  constructor(
+    private schemaService: SchemaNutrizionaleService,
+    private route: ActivatedRoute
+  ) { }
 
-ngOnInit(): void {
-  this.route.paramMap.subscribe(params => {
-    const id = Number(params.get('id'));
-    if (id) {
-      this.caricaSchemaById(id);
-    }
-  });
-}
+  ngOnInit(): void {
+    this.route.paramMap.subscribe(params => {
+      const id = Number(params.get('id'));
+      if (id) {
+        this.caricaSchemaById(id);
+      }
+    });
+  }
   private caricaSchemaById(id: number) {
     this.loading = true;
     this.schemaService.getSchemaById(id).subscribe({
@@ -84,7 +84,7 @@ ngOnInit(): void {
       salvata: false,
       inModifica: true
     };
-    this.dettagliPasti[tipoPasto].opzioni.push(nuovaOpzione);
+    this.dettagliPasti[tipoPasto].opzioni.unshift(nuovaOpzione);
   }
 
   rimuoviOpzione(tipoPasto: string, index: number) {
@@ -159,6 +159,7 @@ ngOnInit(): void {
         this.dettagliPasti[tipoPasto].opzioni = this.dettagliPasti[tipoPasto].opzioni.filter(op => op.id !== opzioneId);
         this.loading = false;
         this.message = 'Opzione eliminata con successo.';
+        this.mostraModaleEsito();
 
         const modalEl = document.getElementById('confermaEliminazioneModal');
         if (modalEl) {
@@ -171,6 +172,7 @@ ngOnInit(): void {
       error: (err) => {
         this.loading = false;
         this.error = err.error?.detail || 'Errore durante l\'eliminazione dell\'opzione.';
+        this.mostraModaleEsito();
       }
     });
   }
@@ -240,10 +242,12 @@ ngOnInit(): void {
         this.dettagliPasti[tipoPasto].opzioni[opzioneIndex].inModifica = false;
         this.loading = false;
         this.message = `Opzione per '${this.formatTipoPasto(tipoPasto)}' salvata con successo!`;
+        this.mostraModaleEsito();
       },
       error: (err) => {
         this.loading = false;
         this.error = err.error?.detail || `Errore nel salvataggio dell'opzione.`;
+        this.mostraModaleEsito();
       }
     });
   }
@@ -253,13 +257,13 @@ ngOnInit(): void {
   }
 
   mostraModaleEsito(): void {
-  setTimeout(() => {
-    const modalElement = document.getElementById('notificaEsitoModal');
-    if (modalElement) {
-      const modal = new (window as any).bootstrap.Modal(modalElement);
-      modal.show();
-    }
-  }, 0);
-}
+    setTimeout(() => {
+      const modalElement = document.getElementById('notificaEsitoModal');
+      if (modalElement) {
+        const modal = new (window as any).bootstrap.Modal(modalElement);
+        modal.show();
+      }
+    }, 0);
+  }
 
 }
