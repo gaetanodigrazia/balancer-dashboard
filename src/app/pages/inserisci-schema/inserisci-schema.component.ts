@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from 'src/app/auth/auth.service';
 import { SchemaBrief, SchemaNutrizionaleService } from 'src/app/services/schema-nutrizionale.service';
 import { UtilsService } from 'src/app/services/utils.service'; // ✅ nuovo import
@@ -31,8 +32,9 @@ export class InserisciSchemaComponent implements OnInit {
   constructor(
     private schemaService: SchemaNutrizionaleService,
     private authService: AuthService,
-    private utilsService: UtilsService // ✅ nuovo
-  ) { }
+    private utilsService: UtilsService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.caricaModelli();
@@ -41,19 +43,17 @@ export class InserisciSchemaComponent implements OnInit {
         this.isDemo = user.is_demo;
 
         if (this.isDemo) {
-
           this.utilsService.generaTokenFirmato().subscribe({
             next: ({ ts, sig }) => {
               this.ts = ts;
               this.sig = sig;
-              this.nome = `Demo - ${ts}`;  // Mostra il token nel campo nome
+              this.nome = `Demo - ${ts}`;
               console.log('🔐 Token demo ricevuto', { ts, sig });
             },
             error: () => {
               console.error('❌ Errore nel recupero token demo');
             }
           });
-
 
           setTimeout(() => {
             const demoModal = document.getElementById('demoModal');
@@ -101,7 +101,6 @@ export class InserisciSchemaComponent implements OnInit {
       payload.clona_da = Number(this.idModelloOrigine);
     }
 
-    // ✅ Se è demo, aggiungi ts e sig
     if (this.isDemo) {
       payload.ts = this.ts;
       payload.sig = this.sig;
@@ -112,6 +111,12 @@ export class InserisciSchemaComponent implements OnInit {
         this.message = '✅ Schema creato con successo';
         this.error = '';
         this.loading = false;
+
+        const successModal = document.getElementById('successModal');
+        if (successModal) {
+          const modalInstance = new bootstrap.Modal(successModal);
+          modalInstance.show();
+        }
       },
       error: () => {
         this.message = '';
@@ -119,5 +124,9 @@ export class InserisciSchemaComponent implements OnInit {
         this.loading = false;
       },
     });
+  }
+
+  vaiAllaHome(): void {
+    this.router.navigate(['/']);
   }
 }

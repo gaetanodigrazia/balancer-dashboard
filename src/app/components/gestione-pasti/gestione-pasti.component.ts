@@ -10,6 +10,7 @@ import { filter, distinctUntilChanged } from 'rxjs/operators';
 })
 export class GestionePastiComponent implements OnInit {
   schema!: SchemaBrief;
+     isDemo = false;
   dettagliPasti: { [tipoPasto: string]: DettagliPasto } = {};
 
   tipiPasto: string[] = [
@@ -44,6 +45,8 @@ ngOnInit(): void {
     this.schemaService.getSchemaById(id).subscribe({
       next: (data) => {
         this.schema = data;
+        this.isDemo = data.is_demo || false;
+
         this.dettagliPasti = {};
 
         this.tipiPasto.forEach(tp => {

@@ -35,6 +35,7 @@ export interface SchemaBrief {
   dettagli?: { [pasto: string]: DettagliPasto };
   is_global?: boolean;
   is_modello?: boolean;
+  is_demo?: boolean;
 }
 
 @Injectable({

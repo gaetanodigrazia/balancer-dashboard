@@ -84,3 +84,21 @@
     <div *ngIf="error" class="text-danger mt-3 fw-semibold">{{ error }}</div>
   </form>
 </div>
+
+<!-- Modale di conferma salvataggio -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-sm">
+      <div class="modal-header bg-success-subtle">
+        <h5 class="modal-title fw-bold text-dark" id="successModalLabel">✅ Schema salvato</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi" (click)="vaiAllaHome()"></button>
+      </div>
+      <div class="modal-body text-dark">
+        Lo schema nutrizionale è stato salvato con successo.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-success" data-bs-dismiss="modal" (click)="vaiAllaHome()">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
