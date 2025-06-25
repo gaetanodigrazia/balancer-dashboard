@@ -66,6 +66,8 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
     return this.paginaCorrente.includes('/riepilogo');
   }
 
+
+
   caricaSchemi() {
     this.loading = true;
     this.simulaProgressBar(20000);

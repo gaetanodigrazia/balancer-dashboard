@@ -45,7 +45,7 @@ ngOnInit(): void {
     this.schemaService.getSchemaById(id).subscribe({
       next: (data) => {
         this.schema = data;
-        this.isDemo = data.is_demo || false;
+        this.isDemo = data.is_global || false;
 
         this.dettagliPasti = {};
 
@@ -67,6 +67,8 @@ ngOnInit(): void {
       error: (err) => {
         this.loading = false;
         this.error = err.error?.detail || 'Errore nel caricamento dello schema.';
+        this.mostraModaleEsito();
+
       }
     });
   }
@@ -249,4 +251,15 @@ ngOnInit(): void {
   formatTipoPasto(tipo: string): string {
     return tipo.replace(/_/g, ' ');
   }
+
+  mostraModaleEsito(): void {
+  setTimeout(() => {
+    const modalElement = document.getElementById('notificaEsitoModal');
+    if (modalElement) {
+      const modal = new (window as any).bootstrap.Modal(modalElement);
+      modal.show();
+    }
+  }, 0);
+}
+
 }
