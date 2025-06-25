@@ -66,15 +66,25 @@
     </div>
 
     <!-- 🔁 Selezione modello da cui copiare -->
-    <div class="mb-3" *ngIf="modelliDisponibili.length > 0">
-      <label for="modelloOrigine" class="form-label fw-semibold">Copia dettagli da modello:</label>
-      <select id="modelloOrigine" class="form-select" [(ngModel)]="idModelloOrigine" name="idModelloOrigine">
-        <option [ngValue]="null">-- Nessuna copia --</option>
-        <option *ngFor="let modello of modelliDisponibili" [value]="modello.id">
-          {{ modello.nome }}
-        </option>
-      </select>
+<div class="mb-3">
+  <label class="form-label fw-semibold" for="modelloOrigine">Copia dettagli da modello:</label>
+
+  <ng-container *ngIf="modelliDisponibili.length > 0; else nessunModello">
+    <select id="modelloOrigine" class="form-select" [(ngModel)]="idModelloOrigine" name="idModelloOrigine">
+      <option [ngValue]="null">-- Nessuna copia --</option>
+      <option *ngFor="let modello of modelliDisponibili" [value]="modello.id">
+        {{ modello.nome }}
+      </option>
+    </select>
+  </ng-container>
+
+  <ng-template #nessunModello>
+    <div class="form-text text-muted fst-italic">
+      Nessun modello disponibile, inserisci prima un modello.
     </div>
+  </ng-template>
+</div>
+
 
     <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
       {{ loading ? 'Salvataggio...' : 'Salva Schema' }}

@@ -1,5 +1,5 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, HostListener } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from 'src/app/auth/auth.service';
 
@@ -13,14 +13,24 @@ import { AuthService } from 'src/app/auth/auth.service';
 export class LayoutComponent {
   sidebarOpen = false;
   isMobileView = window.innerWidth < 768;
+
   constructor(public authService: AuthService, private router: Router) {}
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
   }
 
-logout() {
-  console.log('📌 logout() chiamato');
-  this.authService.logout(); // anche se non svuota, vogliamo solo confermare l'esecuzione
-}
+  @HostListener('window:resize')
+  onResize() {
+    this.isMobileView = window.innerWidth < 768;
+  }
+
+  ngOnInit() {
+    this.onResize();
+  }
+
+  logout() {
+    console.log('📌 logout() chiamato');
+    this.authService.logout();
+  }
 }

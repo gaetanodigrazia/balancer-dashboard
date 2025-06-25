@@ -1,4 +1,5 @@
 <!-- layout.component.html -->
+
 <!-- LOGO MOBILE -->
 <div class="global-logo d-flex d-md-none navbar navbar-light bg-light px-3 align-items-center">
   <button class="btn btn-outline-secondary me-2" (click)="toggleSidebar()">
@@ -13,38 +14,46 @@
 </div>
 
 <!-- Overlay per mobile -->
-<div class="overlay" [class.show]="sidebarOpen" (click)="toggleSidebar()"></div>
+<div class="overlay" [class.show]="sidebarOpen && isMobileView" (click)="toggleSidebar()"></div>
 
 <!-- Layout principale -->
-<div class="d-flex" style="height: 100vh;">
+<div class="d-flex flex-column flex-md-row" style="min-height: 100vh;">
   <!-- Sidebar -->
-  <div class="sidebar p-4 shadow-sm"
+  <div class="sidebar"
+       [class.sidebar-mobile]="isMobileView"
+       [class.sidebar-open]="sidebarOpen && isMobileView"
        [class.d-none]="!sidebarOpen && isMobileView"
-       [class.d-md-block]="!isMobileView"
-       [class.show]="sidebarOpen">
-    <ul class="nav flex-column">
+       [class.d-md-block]="!isMobileView">
+    <ul class="nav flex-column p-4">
       <p class="sidebar-section-title">Navigazione</p>
       <li class="nav-item mb-2">
-        <a routerLink="/home" routerLinkActive="fw-bold text-primary bg-white shadow-sm" class="nav-link px-2 py-1 rounded text-dark">Home</a>
+        <a routerLink="/home" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
+           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Home</a>
       </li>
       <p class="sidebar-section-title">Schemi</p>
       <li class="nav-item mb-2">
-        <a routerLink="/riepilogo" routerLinkActive="fw-bold text-primary bg-white shadow-sm" class="nav-link px-2 py-1 rounded text-dark">Riepilogo</a>
+        <a routerLink="/riepilogo" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
+           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Riepilogo</a>
       </li>
       <li class="nav-item mb-2">
-        <a routerLink="/modelli" routerLinkActive="fw-bold text-primary bg-white shadow-sm" class="nav-link px-2 py-1 rounded text-dark">Modelli</a>
+        <a routerLink="/modelli" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
+           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Modelli</a>
       </li>
       <li class="nav-item mb-2">
-        <a routerLink="/inserisci" routerLinkActive="fw-bold text-primary bg-white shadow-sm" class="nav-link px-2 py-1 rounded text-dark">Inserisci schema</a>
+        <a routerLink="/inserisci" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
+           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Inserisci schema</a>
       </li>
       <li class="nav-item mb-2">
-        <a routerLink="/gestione-schema" routerLinkActive="fw-bold text-primary bg-white shadow-sm" class="nav-link px-2 py-1 rounded text-dark">Gestione Schema</a>
+        <a routerLink="/gestione-schema" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
+           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Gestione Schema</a>
       </li>
       <li class="nav-item mb-2">
-        <a routerLink="/gestione-pasti" routerLinkActive="fw-bold text-primary bg-white shadow-sm" class="nav-link px-2 py-1 rounded text-dark">Gestione Pasti</a>
+        <a routerLink="/gestione-pasti" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
+           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Gestione Pasti</a>
       </li>
       <li class="nav-item mb-2">
-        <a routerLink="/esporta" routerLinkActive="fw-bold text-primary bg-white shadow-sm" class="nav-link px-2 py-1 rounded text-dark">Esporta</a>
+        <a routerLink="/esporta" routerLinkActive="fw-bold text-primary bg-white shadow-sm"
+           class="nav-link px-2 py-1 rounded text-dark" (click)="toggleSidebar()">Esporta</a>
       </li>
       <li class="nav-item mt-auto">
         <button class="btn btn-outline-danger w-100 mt-4" (click)="logout()">Logout</button>
@@ -53,7 +62,7 @@
   </div>
 
   <!-- Contenuto dinamico -->
-  <div class="main-content flex-grow-1">
+  <div class="main-content flex-grow-1 p-4">
     <router-outlet></router-outlet>
   </div>
 </div>
