@@ -35,11 +35,11 @@ export class GeneraRicetteComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!id) {
-      this.error = 'ID schema non valido.';
-      return;
-    }
+const id = this.route.snapshot.paramMap.get('id');
+if (!id || id.trim() === '') {
+  this.error = 'ID schema non valido.';
+  return;
+}
 
     this.schemaService.getSchemaById(id).subscribe({
       next: (data) => {

@@ -25,6 +25,7 @@
     "jspdf": "^3.0.1",
     "jspdf-autotable": "^5.0.2",
     "ng2-charts": "^4.1.1",
+    "ngx-cookieconsent": "^6.0.0",
     "rxjs": "~7.8.1",
     "tslib": "^2.6.2",
     "zone.js": "~0.14.3"

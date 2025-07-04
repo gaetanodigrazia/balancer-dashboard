@@ -32,46 +32,63 @@ export class GestionePastiComponent implements OnInit {
     private route: ActivatedRoute
   ) { }
 
-  ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      const id = Number(params.get('id'));
-      if (id) {
-        this.caricaSchemaById(id);
-      }
-    });
-  }
-  private caricaSchemaById(id: number) {
-    this.loading = true;
-    this.schemaService.getSchemaById(id).subscribe({
-      next: (data) => {
-        this.schema = data;
-        this.isDemo = data.is_global || false;
+ngOnInit(): void {
+  this.route.paramMap.subscribe(params => {
+    const id = params.get('id'); // 👈 lascia come stringa
+    if (id) {
+      this.caricaSchemaById(id); // 👈 passa stringa (UUID)
+    }
+  });
+}
 
-        this.dettagliPasti = {};
+private caricaSchemaById(id: string) {
+  this.loading = true;
 
-        this.tipiPasto.forEach(tp => {
-          const pasto = this.schema.dettagli?.[tp];
-          if (pasto && pasto.opzioni?.length > 0) {
-            pasto.opzioni.forEach(op => {
-              op.salvata = true;
-              op.inModifica = false;
-            });
-            this.dettagliPasti[tp] = pasto;
-          } else {
-            this.dettagliPasti[tp] = { opzioni: [] };
-          }
-        });
+  this.schemaService.getSchemaById(id).subscribe({
+    next: (data) => {
+      this.schema = data;
+      this.isDemo = data.is_global || false;
 
-        this.loading = false;
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.detail || 'Errore nel caricamento dello schema.';
-        this.mostraModaleEsito();
+      // Carica ora i dettagli separatamente
+      this.schemaService.getSchemaDettagliById(id).subscribe({
+        next: (dettagli) => {
+          this.dettagliPasti = {};
 
-      }
-    });
-  }
+          this.tipiPasto.forEach(tp => {
+            const pasto = dettagli?.[tp];
+            if (pasto && pasto.opzioni?.length > 0) {
+              pasto.opzioni.forEach(op => {
+                op.salvata = true;
+                op.inModifica = false;
+              });
+              this.dettagliPasti[tp] = pasto;
+            } else {
+              this.dettagliPasti[tp] = { opzioni: [] };
+            }
+          });
+
+          this.loading = false;
+        },
+        error: (err) => {
+          this.loading = false;
+          this.error = err.error?.detail || 'Errore nel caricamento dei dettagli dello schema.';
+          this.mostraModaleEsito();
+        }
+      });
+    },
+    error: (err) => {
+      this.loading = false;
+      this.error = err.error?.detail || 'Errore nel caricamento dello schema.';
+      this.mostraModaleEsito();
+    }
+  });
+}
+
+
+
+
+
+
 
   nuovoAlimento(): Alimento {
     return { nome: '', macronutriente: '', grammi: null };

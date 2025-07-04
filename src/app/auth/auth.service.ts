@@ -12,18 +12,21 @@ export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_ID_KEY = 'user_id';
   private readonly EXPIRES_KEY = 'expires_at';
-
   constructor(private http: HttpClient, private router: Router) { }
 
-  // auth.service.ts
   login(username: string, password: string): Observable<any> {
     return this.http.post(`${API_BASE_URL}/auth/login`, { username, password }).pipe(
       tap((res: any) => {
-        localStorage.setItem(this.TOKEN_KEY, res.token);
-        localStorage.setItem(this.USER_ID_KEY, res.user_id);
-        localStorage.setItem(this.EXPIRES_KEY, res.expires_at);
+        console.log(res);
+        localStorage.setItem(this.TOKEN_KEY, res.keySession);
+        localStorage.setItem(this.USER_ID_KEY, res.id);
+
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+        localStorage.setItem(this.EXPIRES_KEY, expiresAt.toISOString());
+
         console.log('✅ Login OK:', res);
       })
+
     );
   }
 
@@ -68,29 +71,31 @@ export class AuthService {
       return false;
     }
 
-    //if (!expiresRaw) {
-    //console.log('⚠️ Token presente ma manca la scadenza, considero non valido');
-    //return false;
-    //}
+    if (!expiresRaw) {
+      console.log('⛔ Nessuna data di scadenza presente in localStorage');
+      return false;
+    }
+
+    const safeExpiryRaw = expiresRaw.replace(' ', 'T');
+    const expiryDate = new Date(safeExpiryRaw);
+
+    if (isNaN(expiryDate.getTime())) {
+      console.error('⛔ Data di scadenza non valida in localStorage:', expiresRaw);
+      return false;
+    }
 
     const now = new Date();
-    const expires = new Date(expiresRaw);
+    const isValid = now < expiryDate;
 
-    //if (isNaN(expires.getTime())) {
-    //console.log('⛔ Scadenza non valida nel localStorage:', expiresRaw);
-    //return false;
-    //}
-
-    //const isValid = expires.getTime() > now.getTime();
-    const isValid = true;
-    console.log('🔍 Auth check:', {
-      now: now.toISOString(),
-      expires: expires.toISOString(),
-      isValid
-    });
+    try {
+      console.log(`✅ Token valido: ${isValid} | Ora: ${now.toISOString()} | Scadenza: ${expiryDate.toISOString()}`);
+    } catch (err) {
+      console.error('⚠️ Errore durante la stampa di debug delle date:', err);
+    }
 
     return isValid;
   }
+
   getCurrentUser(): Observable<any> {
     const token = this.getToken();
     console.log('🔍 Chiamata getCurrentUser() in corso');

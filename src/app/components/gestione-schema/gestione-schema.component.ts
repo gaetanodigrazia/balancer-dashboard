@@ -35,16 +35,17 @@ export class GestioneSchemaComponent implements OnInit {
     private router: Router
   ) { }
 
-  ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (id) {
-      this.caricaSchema(id);
-    } else {
-      this.error = 'ID schema non valido.';
-    }
+ngOnInit(): void {
+  const id = this.route.snapshot.paramMap.get('id');
+  if (id) {
+    this.caricaSchema(id);  // ← id è una stringa UUID
+  } else {
+    this.error = 'ID schema non valido.';
   }
+}
 
-  private caricaSchema(id: number) {
+
+  private caricaSchema(id: string) {
     this.loading = true;
     this.schemaService.getSchemaById(id).subscribe({
       next: (data) => {
