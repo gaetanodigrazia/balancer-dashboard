@@ -21,6 +21,7 @@ export interface Opzione {
 }
 
 export interface DettagliPasto {
+  nome: string; 
   opzioni: Opzione[];
 }
 
@@ -35,7 +36,7 @@ export interface SchemaBrief {
   dettagli?: string;
   is_global?: boolean;
   is_modello?: boolean;
-  is_demo?: boolean;
+  is_demo?: boolean; 
 }
 
 @Injectable({
@@ -128,8 +129,8 @@ getSchemaMetadataById(id: string): Observable<SchemaBrief> {
     return this.http.get<SchemaBrief>(`${this.baseUrl}/${id}`);
 }
 
-getSchemaDettagliById(id: string): Observable<DettagliPasto> {
-    return this.http.get<DettagliPasto>(`${this.baseUrl}/${id}/dettagli`);
+getSchemaDettagliById(id: string): Observable<{ [key: string]: DettagliPasto }> {
+    return this.http.get<{ [key: string]: DettagliPasto }>(`${this.baseUrl}/${id}/dettagli`);
 }
 
 

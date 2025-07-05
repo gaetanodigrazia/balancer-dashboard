@@ -5,93 +5,100 @@
     Questo è uno <strong>schema globale</strong>. Le modifiche non sono consentite.
   </div>
 
-  <div *ngFor="let tipo of tipiPasto" class="mb-4">
-    <h6 class="text-primary text-uppercase">{{ formatTipoPasto(tipo) }}</h6>
+  <div class="mb-3">
+  <input type="text" [(ngModel)]="nuovoNomePasto" class="form-control d-inline-block w-auto me-2" placeholder="Nome nuovo pasto">
+  <button class="btn btn-sm btn-primary" (click)="aggiungiNuovoPasto()" [disabled]="!nuovoNomePasto?.trim()">+ Aggiungi Pasto</button>
+</div>
 
-    <button *ngIf="!isDemo" class="btn btn-sm btn-success mb-2" (click)="aggiungiOpzione(tipo)">
-      + Aggiungi Opzione
-    </button>
 
-    <div *ngIf="dettagliPasti[tipo]?.opzioni?.length > 0; else nessunaOpzione">
-      <div *ngFor="let opzione of dettagliPasti[tipo].opzioni; let i = index" class="mb-3 border rounded p-3 bg-light">
+<div *ngFor="let pasto of pasti; let pIdx = index" class="mb-4">
+  <h6 class="text-primary text-uppercase">{{ pasto.nome }}</h6>
 
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <input *ngIf="opzione.inModifica && !isDemo" class="form-control form-control-sm fw-bold" style="width: 200px"
-            [(ngModel)]="opzione.nome" placeholder="Nome opzione" />
-          <strong *ngIf="!opzione.inModifica || isDemo">{{ opzione.nome || ('Opzione ' + (i + 1)) }}</strong>
+  <button *ngIf="!isDemo" class="btn btn-sm btn-success mb-2" (click)="aggiungiOpzione(pIdx)">
+    + Aggiungi Opzione
+  </button>
 
-          <div>
-            <ng-container *ngIf="!isDemo">
-              <button *ngIf="opzione.salvata && !opzione.inModifica" class="btn btn-sm btn-warning me-2"
-                (click)="modificaOpzione(tipo, opzione)">Modifica</button>
-              <button *ngIf="opzione.salvata" class="btn btn-sm btn-danger" (click)="confirmModal(tipo, opzione.id)">Elimina</button>
-              <button *ngIf="!opzione.salvata" class="btn btn-sm btn-danger" (click)="rimuoviOpzione(tipo, i)">Elimina</button>
-              <button *ngIf="opzione.salvata && opzione.inModifica" class="btn btn-sm btn-success me-2"
-                (click)="annullaModificaOpzione(tipo, opzione)">Annulla</button>
-            </ng-container>
+  <div *ngIf="pasto.opzioni?.length > 0; else nessunaOpzione">
+    <div *ngFor="let opzione of pasto.opzioni; let i = index" class="mb-3 border rounded p-3 bg-light">
+
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <input *ngIf="opzione.inModifica && !isDemo" class="form-control form-control-sm fw-bold" style="width: 200px"
+          [(ngModel)]="opzione.nome" placeholder="Nome opzione" />
+        <strong *ngIf="!opzione.inModifica || isDemo">{{ opzione.nome || ('Opzione ' + (i + 1)) }}</strong>
+
+        <div>
+          <ng-container *ngIf="!isDemo">
+            <button *ngIf="opzione.salvata && !opzione.inModifica" class="btn btn-sm btn-warning me-2"
+              (click)="modificaOpzione(pIdx, opzione)">Modifica</button>
+            <button *ngIf="opzione.salvata" class="btn btn-sm btn-danger" (click)="confirmModal(pIdx, opzione.id)">Elimina</button>
+            <button *ngIf="!opzione.salvata" class="btn btn-sm btn-danger" (click)="rimuoviOpzione(pIdx, i)">Elimina</button>
+            <button *ngIf="opzione.salvata && opzione.inModifica" class="btn btn-sm btn-success me-2"
+              (click)="annullaModificaOpzione(pIdx, opzione)">Annulla</button>
+          </ng-container>
+        </div>
+      </div>
+
+      <div *ngFor="let alimento of opzione.alimenti; let j = index" class="mb-2 bg-white p-2 rounded shadow-sm">
+        <div class="row g-2 align-items-center">
+          <div class="col-auto">
+            <select class="form-select form-select-sm" [(ngModel)]="alimento.macronutriente"
+              [disabled]="!opzione.inModifica || isDemo" (change)="macronutrienteChanged(pIdx, i, j)">
+              <option value="" disabled>Seleziona Macronutriente</option>
+              <option value="carboidrati">Carboidrati</option>
+              <option value="grassi">Grassi</option>
+              <option value="proteine">Proteine</option>
+              <option value="gruppo">Gruppo</option>
+            </select>
+          </div>
+          <div class="col">
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="alimento.nome"
+              [disabled]="!opzione.inModifica || isDemo" placeholder="Nome alimento">
+          </div>
+          <div class="col-auto">
+            <input type="number" class="form-control form-control-sm" [(ngModel)]="alimento.grammi"
+              [disabled]="!opzione.inModifica || isDemo" placeholder="Grammi" min="0" step="0.01">
+          </div>
+          <div class="col-auto" *ngIf="!isDemo && opzione.inModifica">
+            <button class="btn btn-sm btn-outline-danger" (click)="rimuoviAlimento(pIdx, i, j)">&times;</button>
           </div>
         </div>
 
-        <div *ngFor="let alimento of opzione.alimenti; let j = index" class="mb-2 bg-white p-2 rounded shadow-sm">
-          <div class="row g-2 align-items-center">
-            <div class="col-auto">
-              <select class="form-select form-select-sm" [(ngModel)]="alimento.macronutriente"
-                [disabled]="!opzione.inModifica || isDemo" (change)="macronutrienteChanged(tipo, i, j)">
-                <option value="" disabled>Seleziona Macronutriente</option>
+        <div *ngIf="alimento.macronutriente === 'gruppo'">
+          <div *ngFor="let sub of alimento.gruppoAlimenti; let k = index" class="mt-2 border rounded p-2 bg-white">
+            <div class="d-flex align-items-center gap-2">
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="sub.nome"
+                [disabled]="!opzione.inModifica || isDemo" placeholder="Nome sub-alimento">
+              <select class="form-select form-select-sm" [(ngModel)]="sub.macronutriente"
+                [disabled]="!opzione.inModifica || isDemo">
+                <option value="" disabled>Macronutriente</option>
                 <option value="carboidrati">Carboidrati</option>
                 <option value="grassi">Grassi</option>
                 <option value="proteine">Proteine</option>
-                <option value="gruppo">Gruppo</option>
               </select>
-            </div>
-            <div class="col">
-              <input type="text" class="form-control form-control-sm" [(ngModel)]="alimento.nome"
-                [disabled]="!opzione.inModifica || isDemo" placeholder="Nome alimento">
-            </div>
-            <div class="col-auto">
-              <input type="number" class="form-control form-control-sm" [(ngModel)]="alimento.grammi"
+              <input type="number" class="form-control form-control-sm" [(ngModel)]="sub.grammi"
                 [disabled]="!opzione.inModifica || isDemo" placeholder="Grammi" min="0" step="0.01">
-            </div>
-            <div class="col-auto" *ngIf="!isDemo && opzione.inModifica">
-              <button class="btn btn-sm btn-outline-danger" (click)="rimuoviAlimento(tipo, i, j)">&times;</button>
+              <button *ngIf="!isDemo && opzione.inModifica" class="btn btn-sm btn-outline-danger"
+                (click)="rimuoviSubAlimento(pIdx, i, j, k)">&times;</button>
             </div>
           </div>
-
-          <div *ngIf="alimento.macronutriente === 'gruppo'">
-            <div *ngFor="let sub of alimento.gruppoAlimenti; let k = index" class="mt-2 border rounded p-2 bg-white">
-              <div class="d-flex align-items-center gap-2">
-                <input type="text" class="form-control form-control-sm" [(ngModel)]="sub.nome"
-                  [disabled]="!opzione.inModifica || isDemo" placeholder="Nome sub-alimento">
-                <select class="form-select form-select-sm" [(ngModel)]="sub.macronutriente"
-                  [disabled]="!opzione.inModifica || isDemo">
-                  <option value="" disabled>Macronutriente</option>
-                  <option value="carboidrati">Carboidrati</option>
-                  <option value="grassi">Grassi</option>
-                  <option value="proteine">Proteine</option>
-                </select>
-                <input type="number" class="form-control form-control-sm" [(ngModel)]="sub.grammi"
-                  [disabled]="!opzione.inModifica || isDemo" placeholder="Grammi" min="0" step="0.01">
-                <button *ngIf="!isDemo && opzione.inModifica" class="btn btn-sm btn-outline-danger"
-                  (click)="rimuoviSubAlimento(tipo, i, j, k)">&times;</button>
-              </div>
-            </div>
-            <button *ngIf="!isDemo && opzione.inModifica" class="btn btn-sm btn-success mt-2"
-              (click)="aggiungiSubAlimento(tipo, i, j)">+ Aggiungi Sub-Alimento</button>
-          </div>
+          <button *ngIf="!isDemo && opzione.inModifica" class="btn btn-sm btn-success mt-2"
+            (click)="aggiungiSubAlimento(pIdx, i, j)">+ Aggiungi Sub-Alimento</button>
         </div>
-
-        <button *ngIf="!isDemo && opzione.inModifica" class="btn btn-sm btn-success mt-2"
-          (click)="aggiungiAlimento(tipo, i)">+ Aggiungi Alimento</button>
-
-        <button *ngIf="!isDemo && (!opzione.salvata || opzione.inModifica)" class="btn btn-sm btn-primary mt-2"
-          (click)="salvaSingoloPasto(tipo)">Salva Opzione</button>
       </div>
-    </div>
 
-    <ng-template #nessunaOpzione>
-      <p class="text-muted fst-italic">Nessuna opzione inserita per questo pasto.</p>
-    </ng-template>
+      <button *ngIf="!isDemo && opzione.inModifica" class="btn btn-sm btn-success mt-2"
+        (click)="aggiungiAlimento(pIdx, i)">+ Aggiungi Alimento</button>
+
+      <button *ngIf="!isDemo && (!opzione.salvata || opzione.inModifica)" class="btn btn-sm btn-primary mt-2"
+        (click)="salvaSingoloPasto(pIdx)">Salva Opzione</button>
+    </div>
   </div>
+
+  <ng-template #nessunaOpzione>
+    <p class="text-muted fst-italic">Nessuna opzione inserita per questo pasto.</p>
+  </ng-template>
+</div>
+
 
   <div *ngIf="message" class="text-success mt-3 fw-semibold">{{ message }}</div>
   <div *ngIf="error" class="text-danger mt-3 fw-semibold">{{ error }}</div>
