@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SchemaNutrizionaleService, Alimento, Opzione, SchemaBrief, DettagliPasto } from '../../services/schema-nutrizionale.service';
+import { DettagliPastoService } from 'src/app/services/dettagli-pasto.service';
 
 @Component({
   selector: 'app-gestione-pasti',
@@ -20,6 +21,7 @@ nuovoNomePasto: string = '';
 
   constructor(
     private schemaService: SchemaNutrizionaleService,
+    private dettagliService: DettagliPastoService,
     private route: ActivatedRoute
   ) { }
 
@@ -32,36 +34,32 @@ nuovoNomePasto: string = '';
     });
   }
 
-private caricaSchemaById(id: string) {
+private caricaSchemaById(id: string): void {
   this.loading = true;
+  this.error = null;
 
   this.schemaService.getSchemaById(id).subscribe({
     next: (data) => {
       this.schema = data;
       this.isDemo = data.is_global || false;
 
-      this.schemaService.getSchemaDettagliById(id).subscribe({
-        next: (dettagli) => {
+      this.dettagliService.getDettagliBySchemaId(id).subscribe({
+        next: (dettagli: DettagliPasto[]) => {
           console.log('Dettagli ricevuti:', dettagli);
 
-          let dettagliArray: DettagliPasto[];
-
-          if (Array.isArray(dettagli)) {
-            dettagliArray = dettagli;
+          // Se vuoto, crea un pasto di default
+          if (!dettagli || dettagli.length === 0) {
+            this.pasti = [];
           } else {
-            dettagliArray = Object.keys(dettagli).map(key => ({
-              nome: dettagli[key].nome || key,
-              opzioni: dettagli[key].opzioni || []
-            }));
-          }
-
-          this.pasti = dettagliArray.map(pasto => {
-            pasto.opzioni.forEach(op => {
-              op.salvata = true;
-              op.inModifica = false;
+            this.pasti = dettagli.map(pasto => {
+              pasto.opzioni = pasto.opzioni.map(op => ({
+                ...op,
+                salvata: true,
+                inModifica: false
+              }));
+              return pasto;
             });
-            return pasto;
-          });
+          }
 
           this.loading = false;
         },
@@ -218,57 +216,62 @@ const payload = {
     });
   }
 
-  salvaSingoloPasto(pastoIndex: number) {
-    if (!this.schema) return;
+salvaSingoloPasto(pastoIndex: number): void {
+  if (!this.schema) return;
 
-    const opzioneIndex = this.pasti[pastoIndex].opzioni.findIndex(o => !o.salvata || o.inModifica);
-    if (opzioneIndex === -1) {
-      this.error = 'Nessuna opzione da salvare.';
-      return;
-    }
+  const pasto = this.pasti[pastoIndex];
+  const opzioneIndex = pasto.opzioni.findIndex(o => !o.salvata || o.inModifica);
 
-    const opzione = this.pasti[pastoIndex].opzioni[opzioneIndex];
-    const alimentiValidi = opzione.alimenti.filter(
-      a => a.nome?.trim() && a.macronutriente && (a.macronutriente === 'gruppo' || a.grammi)
-    );
-
-    if (alimentiValidi.length === 0) {
-      this.error = 'Alimenti non validi.';
-      return;
-    }
-
-    this.loading = true;
-    this.message = null;
-    this.error = null;
-
-    const opzioniSalvate = this.pasti[pastoIndex].opzioni.filter(o => o.salvata && o !== opzione);
-
-const payload = {
-  nome: this.schema.nome,
-  tipoSchema: this.schema.id,
-  tipoPasto: this.pasti[pastoIndex].nome,
-  dettagli: {
-    nome: this.pasti[pastoIndex].nome, 
-    opzioni: [...opzioniSalvate, { ...opzione, alimenti: alimentiValidi }]
+  if (opzioneIndex === -1) {
+    this.error = 'Nessuna opzione da salvare.';
+    this.mostraModaleEsito();
+    return;
   }
-};
 
+  const opzione = pasto.opzioni[opzioneIndex];
+  const alimentiValidi = opzione.alimenti.filter(
+    a => a.nome?.trim() && a.macronutriente && (a.macronutriente === 'gruppo' || a.grammi)
+  );
 
-    this.schemaService.salvaDettagliSingoloPasto(payload).subscribe({
-      next: () => {
-        this.pasti[pastoIndex].opzioni[opzioneIndex].salvata = true;
-        this.pasti[pastoIndex].opzioni[opzioneIndex].inModifica = false;
-        this.loading = false;
-        this.message = `Opzione per '${this.pasti[pastoIndex].nome}' salvata con successo!`;
-        this.mostraModaleEsito();
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.detail || `Errore nel salvataggio dell'opzione.`;
-        this.mostraModaleEsito();
-      }
-    });
+  if (alimentiValidi.length === 0) {
+    this.error = 'Alimenti non validi.';
+    this.mostraModaleEsito();
+    return;
   }
+
+  this.loading = true;
+  this.error = null;
+  this.message = null;
+
+  // Prepara payload coerente con l'API backend
+  const payload = {
+    tipoSchema: this.schema.id,
+    tipoPasto: pasto.nome,
+    dettagli: {
+      nome: pasto.nome,
+      opzioni: [
+        ...pasto.opzioni.filter(o => o.salvata && o !== opzione),
+        { ...opzione, alimenti: alimentiValidi }
+      ]
+    }
+  };
+
+  this.dettagliService.salvaSingoloPasto(payload).subscribe({
+    next: () => {
+      opzione.salvata = true;
+      opzione.inModifica = false;
+      this.loading = false;
+      this.message = `Opzione per '${pasto.nome}' salvata con successo!`;
+      this.mostraModaleEsito();
+    },
+    error: (err) => {
+      this.loading = false;
+      this.error = err.error?.detail || `Errore nel salvataggio dell'opzione.`;
+      this.mostraModaleEsito();
+    }
+  });
+}
+
 
   aggiungiNuovoPasto() {
   const nome = this.nuovoNomePasto.trim();

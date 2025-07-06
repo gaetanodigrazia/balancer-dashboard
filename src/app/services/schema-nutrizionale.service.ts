@@ -94,14 +94,6 @@ export class SchemaNutrizionaleService {
     return this.http.delete(`${this.baseUrl}/${id}`);
   }
 
-  salvaDettagliSingoloPasto(payload: {
-    nome: string;
-    tipoSchema: string;
-    tipoPasto: string;
-    dettagli: DettagliPasto;
-  }): Observable<any> {
-    return this.http.post(`${this.baseUrl}/dinamico/pasto`, payload);
-  }
 
 getSchemaById(id: string): Observable<SchemaBrief> {
   return this.http.get<SchemaBrief>(`${this.baseUrl}/${id}`);
@@ -131,10 +123,6 @@ getSchemaById(id: string): Observable<SchemaBrief> {
 
 getSchemaMetadataById(id: string): Observable<SchemaBrief> {
     return this.http.get<SchemaBrief>(`${this.baseUrl}/${id}`);
-}
-
-getSchemaDettagliById(id: string): Observable<{ [key: string]: DettagliPasto }> {
-    return this.http.get<{ [key: string]: DettagliPasto }>(`${this.baseUrl}/${id}/dettagli`);
 }
 
 
