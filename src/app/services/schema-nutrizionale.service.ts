@@ -18,11 +18,14 @@ export interface Opzione {
   salvata?: boolean;
   nome?: string;
   inModifica?: boolean;
+      completato?: boolean; // <-- aggiungi qui
+
 }
 
 export interface DettagliPasto {
   nome: string; 
   opzioni: Opzione[];
+  completato?: boolean; 
 }
 
 export interface SchemaBrief {
@@ -37,6 +40,7 @@ export interface SchemaBrief {
   is_global?: boolean;
   is_modello?: boolean;
   is_demo?: boolean; 
+  createdAt?: string;
 }
 
 @Injectable({
@@ -132,6 +136,30 @@ getSchemaMetadataById(id: string): Observable<SchemaBrief> {
 getSchemaDettagliById(id: string): Observable<{ [key: string]: DettagliPasto }> {
     return this.http.get<{ [key: string]: DettagliPasto }>(`${this.baseUrl}/${id}/dettagli`);
 }
+
+
+getUltimiSchemi(limit = 5) {
+  return this.http.get<SchemaBrief[]>(`${this.baseUrl}/ultimi?limit=${limit}`);
+}
+getProgressUtente(): Observable<{
+  totaleSchemi: number,
+  schemiCompleti: number,
+  percentuale: number
+}> {
+  return this.http.get<{
+    totaleSchemi: number,
+    schemiCompleti: number,
+    percentuale: number
+  }>(`${this.baseUrl}/progress`);
+}
+toggleCompletatoPasto(schemaId: string, nomePasto: string, completato: boolean): Observable<void> {
+  return this.http.patch<void>(
+    `${this.baseUrl}/dinamico/pasto/${encodeURIComponent(nomePasto)}/toggle-completato`,
+    null,
+    { params: { completato, schemaId } }
+  );
+}
+
 
 
 }

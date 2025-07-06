@@ -1,1 +1,33 @@
-<p>home works!</p>
+<div class="card p-3 shadow-sm rounded-4 mb-4">
+  <h5>🆕 Ultimi Schemi Creati</h5>
+
+  <div *ngIf="loadingUltimi" class="text-muted">Caricamento in corso...</div>
+  
+  <ul *ngIf="ultimiSchemi.length > 0; else noSchemi">
+    <li *ngFor="let schema of ultimiSchemi">
+      {{ schema.nome }} – {{ schema.calorie }} kcal
+    </li>
+  </ul>
+
+  <ng-template #noSchemi>
+    <p class="text-muted fst-italic">Nessuno schema disponibile.</p>
+  </ng-template>
+</div>
+<div class="card p-4 shadow-sm rounded-4 bg-white mb-4">
+  <h5 class="mb-3">📈 Progresso Piani Nutrizionali</h5>
+
+  <div class="progress mb-2" style="height: 25px;">
+    <div
+      class="progress-bar bg-success"
+      role="progressbar"
+      [style.width]="progressPercentuale + '%'"
+      aria-valuemin="0"
+      aria-valuemax="100">
+      {{ progressPercentuale }}%
+    </div>
+  </div>
+
+  <p class="mb-0 text-muted">
+    Hai completato {{ progressCompleti }} su {{ progressTotale }} schemi nutrizionali.
+  </p>
+</div>

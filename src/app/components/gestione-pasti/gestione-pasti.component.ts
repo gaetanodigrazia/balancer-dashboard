@@ -304,4 +304,25 @@ const payload = {
       }
     }, 0);
   }
+
+toggleCompletatoPasto(pastoIndex: number, completato: boolean) {
+  const pasto = this.pasti[pastoIndex];
+  if (!this.schema?.id) return;
+
+  this.loading = true;
+  this.schemaService.toggleCompletatoPasto(this.schema.id, pasto.nome, completato).subscribe({
+    next: () => {
+      pasto.completato = completato;
+      this.loading = false;
+      this.message = completato ? `Pasto '${pasto.nome}' segnato come completato` : `Pasto '${pasto.nome}' segnato come incompleto`;
+      this.mostraModaleEsito();
+    },
+    error: (err) => {
+      this.loading = false;
+      this.error = err.error?.detail || `Errore nel cambio stato del pasto`;
+      this.mostraModaleEsito();
+    }
+  });
+}
+
 }

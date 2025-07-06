@@ -12,7 +12,16 @@
 
 
 <div *ngFor="let pasto of pasti; let pIdx = index" class="mb-4">
-  <h6 class="text-primary text-uppercase">{{ pasto.nome }}</h6>
+  <div class="d-flex align-items-center justify-content-between">
+    <h6 class="text-primary text-uppercase mb-0">{{ pasto.nome }}</h6>
+    <button *ngIf="!isDemo"
+      class="btn btn-sm"
+      [ngClass]="pasto.completato ? 'btn-success' : 'btn-outline-success'"
+      (click)="toggleCompletatoPasto(pIdx, !pasto.completato)">
+      {{ pasto.completato ? '✓ Completato' : 'Marca come completato' }}
+    </button>
+  </div>
+
 
   <button *ngIf="!isDemo" class="btn btn-sm btn-success mb-2" (click)="aggiungiOpzione(pIdx)">
     + Aggiungi Opzione
@@ -22,12 +31,14 @@
     <div *ngFor="let opzione of pasto.opzioni; let i = index" class="mb-3 border rounded p-3 bg-light">
 
       <div class="d-flex justify-content-between align-items-center mb-2">
+      
         <input *ngIf="opzione.inModifica && !isDemo" class="form-control form-control-sm fw-bold" style="width: 200px"
           [(ngModel)]="opzione.nome" placeholder="Nome opzione" />
         <strong *ngIf="!opzione.inModifica || isDemo">{{ opzione.nome || ('Opzione ' + (i + 1)) }}</strong>
 
         <div>
           <ng-container *ngIf="!isDemo">
+
             <button *ngIf="opzione.salvata && !opzione.inModifica" class="btn btn-sm btn-warning me-2"
               (click)="modificaOpzione(pIdx, opzione)">Modifica</button>
             <button *ngIf="opzione.salvata" class="btn btn-sm btn-danger" (click)="confirmModal(pIdx, opzione.id)">Elimina</button>
