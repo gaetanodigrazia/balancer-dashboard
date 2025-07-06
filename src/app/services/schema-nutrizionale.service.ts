@@ -49,7 +49,6 @@ export interface SchemaBrief {
 export class SchemaNutrizionaleService {
 
   private baseUrl = `${API_BASE_URL}/schemi-nutrizionali`;
-      private another = `http://localhost:8080/schemi-nutrizionali`;
 
   constructor(
     private http: HttpClient,
@@ -65,7 +64,7 @@ export class SchemaNutrizionaleService {
 
   getSchemiDisponibili(): Observable<SchemaBrief[]> {
 
-    return this.http.get<SchemaBrief[]>(this.another);
+    return this.http.get<SchemaBrief[]>(this.baseUrl);
   }
 
   salvaDatiGenerali(payload: {
