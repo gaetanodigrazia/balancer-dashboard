@@ -22,7 +22,7 @@ export interface Ricetta {
 export class RicettaService {
   private baseUrl = `${API_BASE_URL}/ricette`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   generaRicetta(schemaId: number, tipoPasto: string): Observable<Ricetta> {
     return this.http.post<Ricetta>(`${this.baseUrl}/genera/${schemaId}/${tipoPasto}`, {});

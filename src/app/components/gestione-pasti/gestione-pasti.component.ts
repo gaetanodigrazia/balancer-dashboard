@@ -3,6 +3,18 @@ import { ActivatedRoute } from '@angular/router';
 import { SchemaNutrizionaleService, Alimento, Opzione, SchemaBrief, DettagliPasto } from '../../services/schema-nutrizionale.service';
 import { DettagliPastoService } from 'src/app/services/dettagli-pasto.service';
 
+export interface DettagliPastoDTO {
+  nome: string;
+  opzioni: Opzione[];
+  completato?: boolean;
+}
+
+export interface SchemaCompletoDTO {
+  schema: SchemaBrief;
+  dettagli: DettagliPastoDTO | null;
+}
+
+
 @Component({
   selector: 'app-gestione-pasti',
   templateUrl: './gestione-pasti.component.html',
@@ -17,7 +29,7 @@ export class GestionePastiComponent implements OnInit {
   message: string | null = null;
   error: string | null = null;
   opzioneDaEliminare: { pastoIndex: number; opzioneId: string } | null = null;
-nuovoNomePasto: string = '';
+  nuovoNomePasto: string = '';
 
   constructor(
     private schemaService: SchemaNutrizionaleService,
@@ -34,49 +46,44 @@ nuovoNomePasto: string = '';
     });
   }
 
-private caricaSchemaById(id: string): void {
-  this.loading = true;
-  this.error = null;
+  private caricaSchemaById(id: string): void {
+    this.loading = true;
+    this.error = null;
 
-  this.schemaService.getSchemaById(id).subscribe({
-    next: (data) => {
-      this.schema = data;
-      this.isDemo = data.is_global || false;
+    this.dettagliService.getSchemaCompletoById(id).subscribe({
+      next: (data: SchemaCompletoDTO) => {
+        this.schema = data.schema;
+        this.isDemo = data.schema.is_global || false;
 
-      this.dettagliService.getDettagliBySchemaId(id).subscribe({
-        next: (dettagli: DettagliPasto[]) => {
-          console.log('Dettagli ricevuti:', dettagli);
+        const dettagli = data.dettagli;
+        console.log('Dettagli ricevuti:', dettagli);
 
-          // Se vuoto, crea un pasto di default
-          if (!dettagli || dettagli.length === 0) {
-            this.pasti = [];
-          } else {
-            this.pasti = dettagli.map(pasto => {
-              pasto.opzioni = pasto.opzioni.map(op => ({
-                ...op,
-                salvata: true,
-                inModifica: false
-              }));
-              return pasto;
-            });
-          }
-
-          this.loading = false;
-        },
-        error: (err) => {
-          this.loading = false;
-          this.error = err.error?.detail || 'Errore nel caricamento dei dettagli dello schema.';
-          this.mostraModaleEsito();
+        if (!dettagli || Object.keys(dettagli).length === 0) {
+          this.pasti = [];
+        } else {
+          this.pasti = Object.entries(dettagli).map(([nome, pasto]) => ({
+            nome,
+            opzioni: pasto.opzioni.map(op => ({
+              ...op,
+              salvata: true,
+              inModifica: false
+            })),
+            completato: pasto.completato || false
+          }));
         }
-      });
-    },
-    error: (err) => {
-      this.loading = false;
-      this.error = err.error?.detail || 'Errore nel caricamento dello schema.';
-      this.mostraModaleEsito();
-    }
-  });
-}
+
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = err.error?.detail || 'Errore nel caricamento dello schema completo.';
+        this.mostraModaleEsito();
+      }
+    });
+  }
+
+
+
 
 
   nuovoAlimento(): Alimento {
@@ -189,19 +196,19 @@ private caricaSchemaById(id: string): void {
     this.message = null;
     this.error = null;
 
-const dettagliObj: { [key: string]: DettagliPasto } = {};
-this.pasti.forEach(pasto => {
-  dettagliObj[pasto.nome] = {
-    nome: pasto.nome,
-    opzioni: pasto.opzioni
-  };
-});
+    const dettagliObj: { [key: string]: DettagliPasto } = {};
+    this.pasti.forEach(pasto => {
+      dettagliObj[pasto.nome] = {
+        nome: pasto.nome,
+        opzioni: pasto.opzioni
+      };
+    });
 
-const payload = {
-  nome: this.schema.nome,
-  tipoSchema: this.schema.id,
-  dettagli: dettagliObj
-};
+    const payload = {
+      nome: this.schema.nome,
+      tipoSchema: this.schema.id,
+      dettagli: dettagliObj
+    };
 
 
     this.schemaService.salvaOpzioniPasti(payload).subscribe({
@@ -216,86 +223,86 @@ const payload = {
     });
   }
 
-salvaSingoloPasto(pastoIndex: number): void {
-  if (!this.schema) return;
+  salvaSingoloPasto(pastoIndex: number): void {
+    if (!this.schema) return;
 
-  const pasto = this.pasti[pastoIndex];
-  const opzioneIndex = pasto.opzioni.findIndex(o => !o.salvata || o.inModifica);
+    const pasto = this.pasti[pastoIndex];
+    const opzioneIndex = pasto.opzioni.findIndex(o => !o.salvata || o.inModifica);
 
-  if (opzioneIndex === -1) {
-    this.error = 'Nessuna opzione da salvare.';
-    this.mostraModaleEsito();
-    return;
-  }
-
-  const opzione = pasto.opzioni[opzioneIndex];
-  const alimentiValidi = opzione.alimenti.filter(
-    a => a.nome?.trim() && a.macronutriente && (a.macronutriente === 'gruppo' || a.grammi)
-  );
-
-  if (alimentiValidi.length === 0) {
-    this.error = 'Alimenti non validi.';
-    this.mostraModaleEsito();
-    return;
-  }
-
-  this.loading = true;
-  this.error = null;
-  this.message = null;
-
-  // Prepara payload coerente con l'API backend
-  const payload = {
-    tipoSchema: this.schema.id,
-    tipoPasto: pasto.nome,
-    dettagli: {
-      nome: pasto.nome,
-      opzioni: [
-        ...pasto.opzioni.filter(o => o.salvata && o !== opzione),
-        { ...opzione, alimenti: alimentiValidi }
-      ]
-    }
-  };
-
-  this.dettagliService.salvaSingoloPasto(payload).subscribe({
-    next: () => {
-      opzione.salvata = true;
-      opzione.inModifica = false;
-      this.loading = false;
-      this.message = `Opzione per '${pasto.nome}' salvata con successo!`;
+    if (opzioneIndex === -1) {
+      this.error = 'Nessuna opzione da salvare.';
       this.mostraModaleEsito();
-    },
-    error: (err) => {
-      this.loading = false;
-      this.error = err.error?.detail || `Errore nel salvataggio dell'opzione.`;
-      this.mostraModaleEsito();
+      return;
     }
-  });
-}
+
+    const opzione = pasto.opzioni[opzioneIndex];
+    const alimentiValidi = opzione.alimenti.filter(
+      a => a.nome?.trim() && a.macronutriente && (a.macronutriente === 'gruppo' || a.grammi)
+    );
+
+    if (alimentiValidi.length === 0) {
+      this.error = 'Alimenti non validi.';
+      this.mostraModaleEsito();
+      return;
+    }
+
+    this.loading = true;
+    this.error = null;
+    this.message = null;
+
+    // Prepara payload coerente con l'API backend
+    const payload = {
+      tipoSchema: this.schema.id,
+      tipoPasto: pasto.nome,
+      dettagli: {
+        nome: pasto.nome,
+        opzioni: [
+          ...pasto.opzioni.filter(o => o.salvata && o !== opzione),
+          { ...opzione, alimenti: alimentiValidi }
+        ]
+      }
+    };
+
+    this.dettagliService.salvaSingoloPasto(payload).subscribe({
+      next: () => {
+        opzione.salvata = true;
+        opzione.inModifica = false;
+        this.loading = false;
+        this.message = `Opzione per '${pasto.nome}' salvata con successo!`;
+        this.mostraModaleEsito();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = err.error?.detail || `Errore nel salvataggio dell'opzione.`;
+        this.mostraModaleEsito();
+      }
+    });
+  }
 
 
   aggiungiNuovoPasto() {
-  const nome = this.nuovoNomePasto.trim();
-  if (!nome) {
-    this.error = 'Inserisci un nome valido per il nuovo pasto';
-    this.mostraModaleEsito();
-    return;
+    const nome = this.nuovoNomePasto.trim();
+    if (!nome) {
+      this.error = 'Inserisci un nome valido per il nuovo pasto';
+      this.mostraModaleEsito();
+      return;
+    }
+
+    // Evita duplicati
+    if (this.pasti.some(p => p.nome === nome)) {
+      this.error = 'Esiste già un pasto con questo nome';
+      this.mostraModaleEsito();
+      return;
+    }
+
+    const nuovoPasto: DettagliPasto = {
+      nome: nome,
+      opzioni: []
+    };
+
+    this.pasti.push(nuovoPasto);
+    this.nuovoNomePasto = '';
   }
-
-  // Evita duplicati
-  if (this.pasti.some(p => p.nome === nome)) {
-    this.error = 'Esiste già un pasto con questo nome';
-    this.mostraModaleEsito();
-    return;
-  }
-
-  const nuovoPasto: DettagliPasto = {
-    nome: nome,
-    opzioni: []
-  };
-
-  this.pasti.push(nuovoPasto);
-  this.nuovoNomePasto = '';
-}
 
 
   mostraModaleEsito(): void {
@@ -308,24 +315,23 @@ salvaSingoloPasto(pastoIndex: number): void {
     }, 0);
   }
 
-toggleCompletatoPasto(pastoIndex: number, completato: boolean) {
-  const pasto = this.pasti[pastoIndex];
-  if (!this.schema?.id) return;
+  toggleCompletatoPasto(pastoIndex: number, completato: boolean) {
+    const pasto = this.pasti[pastoIndex];
+    if (!this.schema?.id) return;
 
-  this.loading = true;
-  this.schemaService.toggleCompletatoPasto(this.schema.id, pasto.nome, completato).subscribe({
-    next: () => {
-      pasto.completato = completato;
-      this.loading = false;
-      this.message = completato ? `Pasto '${pasto.nome}' segnato come completato` : `Pasto '${pasto.nome}' segnato come incompleto`;
-      this.mostraModaleEsito();
-    },
-    error: (err) => {
-      this.loading = false;
-      this.error = err.error?.detail || `Errore nel cambio stato del pasto`;
-      this.mostraModaleEsito();
-    }
-  });
-}
-
+    this.loading = true;
+    this.schemaService.toggleCompletatoPasto(this.schema.id, pasto.nome, completato).subscribe({
+      next: () => {
+        pasto.completato = completato;
+        this.loading = false;
+        this.message = completato ? `Pasto '${pasto.nome}' segnato come completato` : `Pasto '${pasto.nome}' segnato come incompleto`;
+        this.mostraModaleEsito();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = err.error?.detail || `Errore nel cambio stato del pasto`;
+        this.mostraModaleEsito();
+      }
+    });
+  }
 }

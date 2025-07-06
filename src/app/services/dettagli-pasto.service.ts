@@ -4,23 +4,54 @@ import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { DettagliPasto } from './schema-nutrizionale.service';
 import { API_BASE_URL } from '../api.config';
+import { SchemaBrief } from './schema-nutrizionale.service';
+export interface Alimento {
+  nome: string;
+  macronutriente: 'carboidrati' | 'grassi' | 'proteine' | 'gruppo' | '';
+  grammi: number | null;
+  gruppoAlimenti?: Alimento[];
+}
+
+export interface Opzione {
+  id?: string;
+  alimenti: Alimento[];
+  salvata?: boolean;
+  nome?: string;
+  inModifica?: boolean;
+  completato?: boolean; // <-- aggiungi qui
+
+}
+
+export interface DettagliPastoDTO {
+  nome: string;
+  opzioni: Opzione[];
+  completato?: boolean;
+}
+
+export interface SchemaCompletoDTO {
+  schema: SchemaBrief;
+  dettagli: DettagliPastoDTO | null;
+}
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class DettagliPastoService {
+
   private baseUrl = `${API_BASE_URL}/schemi-nutrizionali/dettagli`;
 
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   /**
    * Ottieni i dettagli dei pasti per uno schema
    * @param schemaId UUID dello schema
    */
-  getDettagliBySchemaId(schemaId: string): Observable<DettagliPasto[]> {
-    return this.http.get<DettagliPasto[]>(`${this.baseUrl}/${schemaId}`);
+  getSchemaCompletoById(schemaId: string): Observable<SchemaCompletoDTO> {
+    return this.http.get<SchemaCompletoDTO>(`${this.baseUrl}/${schemaId}/completo`);
   }
+
 
   /**
    * Salva o aggiorna un singolo pasto in uno schema

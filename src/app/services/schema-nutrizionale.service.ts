@@ -18,14 +18,14 @@ export interface Opzione {
   salvata?: boolean;
   nome?: string;
   inModifica?: boolean;
-      completato?: boolean; // <-- aggiungi qui
+  completato?: boolean; // <-- aggiungi qui
 
 }
 
 export interface DettagliPasto {
-  nome: string; 
+  nome: string;
   opzioni: Opzione[];
-  completato?: boolean; 
+  completato?: boolean;
 }
 
 export interface SchemaBrief {
@@ -39,7 +39,7 @@ export interface SchemaBrief {
   dettagli?: string;
   is_global?: boolean;
   is_modello?: boolean;
-  is_demo?: boolean; 
+  is_demo?: boolean;
   createdAt?: string;
 }
 
@@ -94,9 +94,9 @@ export class SchemaNutrizionaleService {
   }
 
 
-getSchemaById(id: string): Observable<SchemaBrief> {
-  return this.http.get<SchemaBrief>(`${this.baseUrl}/${id}`);
-}
+  getSchemaById(id: string): Observable<SchemaBrief> {
+    return this.http.get<SchemaBrief>(`${this.baseUrl}/${id}`);
+  }
 
 
   rimuoviOpzione(schemaId: string, tipoPasto: string, opzioneId: string): Observable<any> {
@@ -116,37 +116,34 @@ getSchemaById(id: string): Observable<SchemaBrief> {
   }
 
   getSchemiGlobali() {
-  return this.http.get<SchemaBrief[]>(`${this.baseUrl}/schema/globali`).pipe(
-    tap(res => console.log('🔍 Risposta cruda schemi globali:', res)));
-}
+    return this.http.get<SchemaBrief[]>(`${this.baseUrl}/schema/globali`).pipe(
+      tap(res => console.log('🔍 Risposta cruda schemi globali:', res)));
+  }
 
-getSchemaMetadataById(id: string): Observable<SchemaBrief> {
+  getSchemaMetadataById(id: string): Observable<SchemaBrief> {
     return this.http.get<SchemaBrief>(`${this.baseUrl}/${id}`);
-}
+  }
 
 
-getUltimiSchemi(limit = 5) {
-  return this.http.get<SchemaBrief[]>(`${this.baseUrl}/ultimi?limit=${limit}`);
-}
-getProgressUtente(): Observable<{
-  totaleSchemi: number,
-  schemiCompleti: number,
-  percentuale: number
-}> {
-  return this.http.get<{
+  getUltimiSchemi(limit = 5) {
+    return this.http.get<SchemaBrief[]>(`${this.baseUrl}/ultimi?limit=${limit}`);
+  }
+  getProgressUtente(): Observable<{
     totaleSchemi: number,
     schemiCompleti: number,
     percentuale: number
-  }>(`${this.baseUrl}/progress`);
-}
-toggleCompletatoPasto(schemaId: string, nomePasto: string, completato: boolean): Observable<void> {
-  return this.http.patch<void>(
-    `${this.baseUrl}/dinamico/pasto/${encodeURIComponent(nomePasto)}/toggle-completato`,
-    null,
-    { params: { completato, schemaId } }
-  );
-}
-
-
-
+  }> {
+    return this.http.get<{
+      totaleSchemi: number,
+      schemiCompleti: number,
+      percentuale: number
+    }>(`${this.baseUrl}/progress`);
+  }
+  toggleCompletatoPasto(schemaId: string, nomePasto: string, completato: boolean): Observable<void> {
+    return this.http.patch<void>(
+      `${this.baseUrl}/dettagli/pasto/${encodeURIComponent(nomePasto)}/toggle-completato`,
+      null,
+      { params: { completato, schemaId } }
+    );
+  }
 }

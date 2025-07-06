@@ -35,14 +35,14 @@ export class GestioneSchemaComponent implements OnInit {
     private router: Router
   ) { }
 
-ngOnInit(): void {
-  const id = this.route.snapshot.paramMap.get('id');
-  if (id) {
-    this.caricaSchema(id);  // ← id è una stringa UUID
-  } else {
-    this.error = 'ID schema non valido.';
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.caricaSchema(id);  // ← id è una stringa UUID
+    } else {
+      this.error = 'ID schema non valido.';
+    }
   }
-}
 
 
   private caricaSchema(id: string) {
@@ -77,20 +77,20 @@ ngOnInit(): void {
 
     this.loading = true;
 
-const payload: any = {
-  nome: this.nome.trim(),
-  calorie: this.calorie,
-  carboidrati: this.carboidrati,
-  grassi: this.grassi,
-  proteine: this.proteine,
-  acqua: this.acqua,
-};
+    const payload: any = {
+      nome: this.nome.trim(),
+      calorie: this.calorie,
+      carboidrati: this.carboidrati,
+      grassi: this.grassi,
+      proteine: this.proteine,
+      acqua: this.acqua,
+    };
 
-if (this.schema?.id) {
-  payload.id = this.schema.id;
-}
+    if (this.schema?.id) {
+      payload.id = this.schema.id;
+    }
 
-console.log('Payload in invio:', payload);
+    console.log('Payload in invio:', payload);
 
     this.schemaService.salvaDatiGenerali(payload).subscribe({
       next: () => {

@@ -37,14 +37,22 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
     this.caricaSchemiGlobali(); // ✅ aggiunto
   }
 
-  ngAfterViewInit(): void {
-    const modalElement = document.getElementById('anteprimaModal');
-    if (modalElement) {
-      this.modalInstance = new bootstrap.Modal(modalElement);
+ngAfterViewInit(): void {
+    const anteprimaModalElement = document.getElementById('anteprimaModal');
+    if (anteprimaModalElement) {
+        this.modalInstance = new bootstrap.Modal(anteprimaModalElement);
+    } else {
+        console.warn('Elemento anteprimaModal non trovato nel DOM');
     }
-    this.modalInstance = new bootstrap.Modal(document.getElementById('anteprimaModal'));
-    this.modalElimina = new bootstrap.Modal(document.getElementById('confermaEliminazioneModal'));
-  }
+
+    const eliminaModalElement = document.getElementById('confermaEliminazioneModal');
+    if (eliminaModalElement) {
+        this.modalElimina = new bootstrap.Modal(eliminaModalElement);
+    } else {
+        console.warn('Elemento confermaEliminazioneModal non trovato nel DOM');
+    }
+}
+
 
   isFromGestioneSchema(): boolean {
     return this.paginaCorrente.includes('/gestione-schema');

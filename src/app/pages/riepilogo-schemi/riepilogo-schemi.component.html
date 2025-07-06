@@ -126,3 +126,23 @@
     <a routerLink="/inserisci" class="btn btn-primary btn-sm mt-2">➕ Crea uno schema</a>
   </div>
 </div>
+
+
+<!-- Modal di conferma eliminazione -->
+<div class="modal fade" id="confermaEliminazioneModal" tabindex="-1" aria-labelledby="confermaEliminazioneModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="confermaEliminazioneModalLabel">Conferma eliminazione</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <p>Sei sicuro di voler eliminare lo schema <strong>{{ schemaDaEliminare?.nome }}</strong>?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-danger" (click)="confermaEliminazione()">Elimina</button>
+      </div>
+    </div>
+  </div>
+</div>
