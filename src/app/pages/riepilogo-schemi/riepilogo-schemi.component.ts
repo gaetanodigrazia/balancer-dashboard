@@ -22,6 +22,9 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
   progress: number = 0;
   schemaDaEliminare: SchemaBrief | null = null;
   modalElimina: any = null;
+  schemaDaClonare: SchemaBrief | null = null;
+  error: string | null = null;
+  message: string | null = null;
 
   @Output() selezionaSchema = new EventEmitter<SchemaBrief>();
   @Output() cambiaTab = new EventEmitter<'gestione-schema' | 'gestione-pasti'>();
@@ -34,24 +37,25 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
   ngOnInit() {
     this.paginaCorrente = this.router.url;
     this.caricaSchemi();
-    this.caricaSchemiGlobali(); // ✅ aggiunto
+    this.caricaSchemiGlobali();
   }
 
-ngAfterViewInit(): void {
+  ngAfterViewInit(): void {
     const anteprimaModalElement = document.getElementById('anteprimaModal');
     if (anteprimaModalElement) {
-        this.modalInstance = new bootstrap.Modal(anteprimaModalElement);
+      this.modalInstance = new bootstrap.Modal(anteprimaModalElement);
     } else {
-        console.warn('Elemento anteprimaModal non trovato nel DOM');
+      console.warn('Elemento anteprimaModal non trovato nel DOM');
     }
 
     const eliminaModalElement = document.getElementById('confermaEliminazioneModal');
     if (eliminaModalElement) {
-        this.modalElimina = new bootstrap.Modal(eliminaModalElement);
+      this.modalElimina = new bootstrap.Modal(eliminaModalElement);
     } else {
-        console.warn('Elemento confermaEliminazioneModal non trovato nel DOM');
+      console.warn('Elemento confermaEliminazioneModal non trovato nel DOM');
     }
-}
+
+  }
 
 
   isFromGestioneSchema(): boolean {
@@ -317,4 +321,56 @@ ngAfterViewInit(): void {
       }
     });
   }
+
+  apriModaleClonazione(schema: SchemaBrief): void {
+    this.schemaDaClonare = schema;
+    const modalEl = document.getElementById('confermaClonazioneModal');
+    if (modalEl) {
+      const modal = new (window as any).bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  }
+
+  mostraModaleEsito(): void {
+    setTimeout(() => {
+      const modalElement = document.getElementById('notificaEsitoModal');
+      if (modalElement) {
+        const modal = new (window as any).bootstrap.Modal(modalElement);
+        modal.show();
+      }
+    }, 0);
+  }
+  confermaClonazione(): void {
+    if (!this.schemaDaClonare) return;
+
+    this.loading = true;
+    this.error = null;
+    this.message = null;
+
+    this.schemaService.clonaSchema(this.schemaDaClonare.id).subscribe({
+      next: (res: { message: string; id: number }) => {
+        this.message = res.message || 'Schema clonato con successo.';
+        this.loading = false;
+        this.caricaSchemi();
+        this.mostraModaleEsito();
+
+        // Nascondi la modale dopo la clonazione
+        const modalEl = document.getElementById('confermaClonazioneModal');
+        if (modalEl) {
+          const modal = (window as any).bootstrap.Modal.getInstance(modalEl);
+          modal?.hide();
+        }
+
+        this.schemaDaClonare = null;
+      },
+      error: (err) => {
+        this.loading = false;
+        this.error = err.error?.detail || 'Errore durante la clonazione dello schema.';
+        this.mostraModaleEsito();
+      }
+    });
+
+
+  }
+
 }

@@ -17,65 +17,47 @@
   </div>
 </div>
 
-<!-- TABELLA SCHEMI GLOBALI -->
-<div class="table-wrapper">
-  <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
-      <thead class="table-secondary text-dark">
-        <tr>
-          <th>Nome Schema</th>
-          <th>Calorie</th>
-          <th>Carboidrati (g)</th>
-          <th>Grassi (g)</th>
-          <th>Proteine (g)</th>
-          <th>Acqua (L)</th>
-          <th *ngIf="isFromModelli() || isFromGestioneSchema()">Modifica</th>
-          <th *ngIf="isFromModelli() || isFromGestioneSchema()">Elimina</th>
-          <th *ngIf="isFromModelli()">Clona</th>
-          <th *ngIf="isFromGestionePasti()">Pasti</th>
-          <th *ngIf="isFromEsporta()">PDF</th>
-          <th *ngIf="isFromEsporta()">Anteprima</th>
-      </thead>
-      <tbody>
-        <tr *ngFor="let schema of schemiGlobali">
-          <td data-label="Nome Schema"><strong>{{ schema.nome }}</strong></td>
-          <td data-label="Calorie">{{ schema.calorie | number:'1.0-2' }}</td>
-          <td data-label="Carboidrati (g)">{{ schema.carboidrati | number:'1.0-2' }}</td>
-          <td data-label="Grassi (g)">{{ schema.grassi | number:'1.0-2' }}</td>
-          <td data-label="Proteine (g)">{{ schema.proteine | number:'1.0-2' }}</td>
-          <td data-label="Acqua (L)">{{ schema.acqua | number:'1.0-2' }}</td>
-          <td data-label="Modifica" *ngIf="isFromModelli() || isFromGestioneSchema()">
-            <button class="btn btn-sm btn-warning" (click)="modificaSchema(schema)">Modifica</button>
-          </td>
-          <td data-label="Elimina" *ngIf="isFromModelli() || isFromGestioneSchema()">
-            <button class="btn btn-sm btn-danger" (click)="apriModaleEliminazione(schema)">Elimina</button>
-          </td>
-          <td data-label="Clona" *ngIf="isFromModelli()">
-            <button class="btn btn-sm btn-success" (click)="clonaSchema(schema)">Clona</button>
-          </td>
-          <td data-label="Pasti" *ngIf="isFromGestionePasti()">
-            <button class="btn btn-sm btn-info" (click)="modificaPasti(schema)">Visualizza Pasti</button>
-          </td>
-          <td data-label="PDF" *ngIf="isFromEsporta()">
-            <button class="btn btn-sm btn-secondary" (click)="esportaSchemaPdf(schema)">PDF</button>
-          </td>
-          <td data-label="Anteprima" *ngIf="isFromEsporta()">
-            <button class="btn btn-sm btn-outline-primary" (click)="mostraAnteprima(schema)">Anteprima</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div *ngIf="schemiGlobali.length === 0 && !loading" class="alert alert-info mt-3">
-    Nessuno schema globale disponibile.
-  </div>
-</div>
-
 <!-- TABELLA SCHEMI LOCALI -->
-<div class="table-wrapper">
-  <div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
-      <thead class="table-secondary text-dark">
+<div *ngIf="schemi.length > 0">
+
+  <!-- Card responsive su mobile -->
+  <div class="d-md-none">
+    <div class="card mb-3 shadow-sm" *ngFor="let schema of schemi">
+      <div class="card-body">
+        <h5 class="card-title text-primary mb-3">{{ schema.nome }}</h5>
+        <ul class="list-group list-group-flush mb-3">
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Calorie:</span><span>{{ schema.calorie | number:'1.0-2' }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Carboidrati (g):</span><span>{{ schema.carboidrati | number:'1.0-2' }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Grassi (g):</span><span>{{ schema.grassi | number:'1.0-2' }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Proteine (g):</span><span>{{ schema.proteine | number:'1.0-2' }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between">
+            <span>Acqua (L):</span><span>{{ schema.acqua | number:'1.0-2' }}</span>
+          </li>
+        </ul>
+        <div class="d-flex justify-content-around flex-wrap gap-2">
+          <button class="btn btn-sm btn-warning" *ngIf="isFromModelli() || isFromGestioneSchema()" (click)="modificaSchema(schema)">Modifica</button>
+          <button class="btn btn-sm btn-danger" *ngIf="isFromModelli() || isFromGestioneSchema()" (click)="apriModaleEliminazione(schema)">Elimina</button>
+          <button class="btn btn-sm btn-success" *ngIf="isFromModelli()" (click)="apriModaleClonazione(schema)">Clona</button>
+          <button class="btn btn-sm btn-info" *ngIf="isFromGestionePasti()" (click)="modificaPasti(schema)">Modifica Pasti</button>
+          <button class="btn btn-sm btn-secondary" *ngIf="isFromEsporta()" (click)="esportaSchemaPdf(schema)">PDF</button>
+          <button class="btn btn-sm btn-outline-primary" *ngIf="isFromEsporta()" (click)="mostraAnteprima(schema)">Anteprima</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabella classica su desktop -->
+  <div class="table-responsive d-none d-md-block">
+    <table class="table table-hover align-middle shadow-sm rounded overflow-hidden">
+      <thead class="table-light">
         <tr>
           <th>Nome Schema</th>
           <th>Calorie</th>
@@ -93,39 +75,25 @@
       </thead>
       <tbody>
         <tr *ngFor="let schema of schemi" [class.table-primary]="schema === selectedSchema">
-          <td data-label="Nome Schema"><strong>{{ schema.nome }}</strong></td>
-          <td data-label="Calorie">{{ schema.calorie | number:'1.0-2' }}</td>
-          <td data-label="Carboidrati (g)">{{ schema.carboidrati | number:'1.0-2' }}</td>
-          <td data-label="Grassi (g)">{{ schema.grassi | number:'1.0-2' }}</td>
-          <td data-label="Proteine (g)">{{ schema.proteine | number:'1.0-2' }}</td>
-          <td data-label="Acqua (L)">{{ schema.acqua | number:'1.0-2' }}</td>
-          <td data-label="Modifica" *ngIf="isFromModelli() || isFromGestioneSchema()">
-            <button class="btn btn-sm btn-warning" (click)="modificaSchema(schema)">Modifica</button>
-          </td>
-          <td data-label="Elimina" *ngIf="isFromModelli() || isFromGestioneSchema()">
-            <button class="btn btn-sm btn-danger" (click)="apriModaleEliminazione(schema)">Elimina</button>
-          </td>
-          <td data-label="Clona" *ngIf="isFromModelli()">
-            <button class="btn btn-sm btn-success" (click)="clonaSchema(schema)">Clona</button>
-          </td>
-          <td data-label="Pasti" *ngIf="isFromGestionePasti()">
-            <button class="btn btn-sm btn-info" (click)="modificaPasti(schema)">Modifica Pasti</button>
-          </td>
-          <td data-label="PDF" *ngIf="isFromEsporta()">
-            <button class="btn btn-sm btn-secondary" (click)="esportaSchemaPdf(schema)">PDF</button>
-          </td>
-          <td data-label="Anteprima" *ngIf="isFromEsporta()">
-            <button class="btn btn-sm btn-outline-primary" (click)="mostraAnteprima(schema)">Anteprima</button>
-          </td>
+          <td><strong>{{ schema.nome }}</strong></td>
+          <td>{{ schema.calorie | number:'1.0-2' }}</td>
+          <td>{{ schema.carboidrati | number:'1.0-2' }}</td>
+          <td>{{ schema.grassi | number:'1.0-2' }}</td>
+          <td>{{ schema.proteine | number:'1.0-2' }}</td>
+          <td>{{ schema.acqua | number:'1.0-2' }}</td>
+          <td *ngIf="isFromModelli() || isFromGestioneSchema()"><button class="btn btn-sm btn-warning" (click)="modificaSchema(schema)">Modifica</button></td>
+          <td *ngIf="isFromModelli() || isFromGestioneSchema()"><button class="btn btn-sm btn-danger" (click)="apriModaleEliminazione(schema)">Elimina</button></td>
+          <td *ngIf="isFromModelli()"><button class="btn btn-sm btn-success" (click)="apriModaleClonazione(schema)">Clona</button></td>
+          <td *ngIf="isFromGestionePasti()"><button class="btn btn-sm btn-info" (click)="modificaPasti(schema)">Modifica Pasti</button></td>
+          <td *ngIf="isFromEsporta()"><button class="btn btn-sm btn-secondary" (click)="esportaSchemaPdf(schema)">PDF</button></td>
+          <td *ngIf="isFromEsporta()"><button class="btn btn-sm btn-outline-primary" (click)="mostraAnteprima(schema)">Anteprima</button></td>
         </tr>
       </tbody>
     </table>
   </div>
-  <div *ngIf="schemi.length === 0 && !loading" class="alert alert-info mt-3">
-    <p class="mb-1">Sembra che tu non abbia ancora creato alcuno schema.</p>
-    <a routerLink="/inserisci" class="btn btn-primary btn-sm mt-2">➕ Crea uno schema</a>
-  </div>
+
 </div>
+
 
 
 <!-- Modal di conferma eliminazione -->
@@ -142,6 +110,46 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
         <button type="button" class="btn btn-danger" (click)="confermaEliminazione()">Elimina</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal di conferma clonazione -->
+<div class="modal fade" id="confermaClonazioneModal" tabindex="-1" aria-labelledby="confermaClonazioneModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="confermaClonazioneModalLabel">Conferma clonazione</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <p>Vuoi clonare lo schema <strong>{{ schemaDaClonare?.nome }}</strong>?</p>
+        <p class="small text-muted mb-0">Il nuovo schema clonato sarà visibile nella lista dei tuoi modelli e potrà essere modificato liberamente.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-success" (click)="confermaClonazione()">Clona</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale esito salvataggio -->
+<div class="modal fade" id="notificaEsitoModal" tabindex="-1" aria-labelledby="esitoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header" [ngClass]="{ 'bg-success': !error, 'bg-danger': error }">
+        <h5 class="modal-title text-white" id="esitoLabel">
+          {{ error ? 'Errore' : 'Successo' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">{{ error || message }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Chiudi</button>
       </div>
     </div>
   </div>

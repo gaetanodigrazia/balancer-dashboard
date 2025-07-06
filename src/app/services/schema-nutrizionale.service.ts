@@ -110,7 +110,7 @@ export class SchemaNutrizionaleService {
   }
 
   getModelli(): Observable<SchemaBrief[]> {
-    return this.http.get<SchemaBrief[]>(`${this.baseUrl}/schema/modelli`).pipe(
+    return this.http.get<SchemaBrief[]>(`${this.baseUrl}/modelli`).pipe(
       tap((res) => console.log('✅ Modelli caricati:', res))
     );
   }
