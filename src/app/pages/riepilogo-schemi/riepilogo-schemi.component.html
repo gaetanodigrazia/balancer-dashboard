@@ -48,7 +48,7 @@
           <button class="btn btn-sm btn-success" *ngIf="isFromModelli()" (click)="apriModaleClonazione(schema)">Clona</button>
           <button class="btn btn-sm btn-info" *ngIf="isFromGestionePasti()" (click)="modificaPasti(schema)">Modifica Pasti</button>
           <button class="btn btn-sm btn-secondary" *ngIf="isFromEsporta()" (click)="esportaSchemaPdf(schema)">PDF</button>
-          <button class="btn btn-sm btn-outline-primary" *ngIf="isFromEsporta()" (click)="mostraAnteprima(schema)">Anteprima</button>
+          <button class="btn btn-sm btn-outline-primary" *ngIf="isFromEsporta() || isFromModelli()" (click)="mostraAnteprima(schema)">Anteprima</button>
         </div>
       </div>
     </div>
@@ -70,7 +70,7 @@
           <th *ngIf="isFromModelli()">Clona</th>
           <th *ngIf="isFromGestionePasti()">Pasti</th>
           <th *ngIf="isFromEsporta()">PDF</th>
-          <th *ngIf="isFromEsporta()">Anteprima</th>
+          <th *ngIf="isFromEsporta() || isFromModelli()">Anteprima</th>
         </tr>
       </thead>
       <tbody>
@@ -86,7 +86,7 @@
           <td *ngIf="isFromModelli()"><button class="btn btn-sm btn-success" (click)="apriModaleClonazione(schema)">Clona</button></td>
           <td *ngIf="isFromGestionePasti()"><button class="btn btn-sm btn-info" (click)="modificaPasti(schema)">Modifica Pasti</button></td>
           <td *ngIf="isFromEsporta()"><button class="btn btn-sm btn-secondary" (click)="esportaSchemaPdf(schema)">PDF</button></td>
-          <td *ngIf="isFromEsporta()"><button class="btn btn-sm btn-outline-primary" (click)="mostraAnteprima(schema)">Anteprima</button></td>
+          <td *ngIf="isFromEsporta() || isFromModelli()"><button class="btn btn-sm btn-outline-primary" (click)="mostraAnteprima(schema)">Anteprima</button></td>
         </tr>
       </tbody>
     </table>
@@ -150,6 +150,55 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Chiudi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="anteprimaModal" tabindex="-1" aria-labelledby="anteprimaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="anteprimaModalLabel">Anteprima Schema</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+<div *ngIf="anteprimaSchema">
+  <h6 class="fw-bold mb-3">{{ anteprimaSchema.schema.nome }}</h6>
+  <ul class="list-group mb-3">
+    <li class="list-group-item">kCal: {{ anteprimaSchema.schema.calorie }}</li>
+    <li class="list-group-item">Carboidrati: {{ anteprimaSchema.schema.carboidrati }}g</li>
+    <li class="list-group-item">Grassi: {{ anteprimaSchema.schema.grassi }}g</li>
+    <li class="list-group-item">Proteine: {{ anteprimaSchema.schema.proteine }}g</li>
+    <li class="list-group-item">Acqua: {{ anteprimaSchema.schema.acqua }}L</li>
+  </ul>
+
+  <div *ngFor="let pastoKey of getPastiKeys(anteprimaSchema.dettagli)">
+    <h6 class="text-primary mt-3">{{ formatPastoKey(pastoKey) }}</h6>
+    <div *ngFor="let opzione of anteprimaSchema.dettagli[pastoKey].opzioni" class="mb-2">
+      <div class="fw-semibold">• {{ opzione.nome }}</div>
+      <ul class="mb-2">
+        <li *ngFor="let alimento of opzione.alimenti">
+          {{ alimento.nome }} - {{ alimento.grammi }}g
+          <span *ngIf="alimento.macronutriente">({{ alimento.macronutriente }})</span>
+          <div *ngIf="alimento.macronutriente === 'gruppo' && alimento.gruppoAlimenti?.length > 0" class="ms-3 mt-1">
+            <div class="small text-muted">Gruppo:</div>
+            <ul>
+              <li *ngFor="let grAl of alimento.gruppoAlimenti">
+                {{ grAl.nome }} - {{ grAl.grammi }}g
+                <span *ngIf="grAl.macronutriente">({{ grAl.macronutriente }})</span>
+              </li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
       </div>
     </div>
   </div>

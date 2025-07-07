@@ -189,16 +189,25 @@ esportaSchemaPdf(schemaBrief: SchemaBrief) {
   });
 }
 
+mostraAnteprima(schema: SchemaBrief) {
+  this.dettagliService.getSchemaCompletoById(schema.id).subscribe({
+    next: (detailedSchema) => {
+      this.anteprimaSchema = detailedSchema;
+      console.log('✅ Anteprima caricata:', detailedSchema);
+      const modalEl = document.getElementById('anteprimaModal');
+      if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    },
+    error: (err) => {
+      console.error('❌ Errore nel caricamento anteprima:', err);
+      alert('Errore nel caricamento dell\'anteprima.');
+    }
+  });
+}
 
-  mostraAnteprima(schema: SchemaBrief) {
-    this.schemaService.getSchemaById(schema.id).subscribe({
-      next: (detailedSchema) => {
-        this.anteprimaSchema = detailedSchema;
-        this.modalInstance?.show();
-      },
-      error: (err) => console.error('Errore nel caricamento anteprima:', err)
-    });
-  }
+
 
   getPastiKeys(schema: any): string[] {
     return schema?.dettagli ? Object.keys(schema.dettagli) : [];
