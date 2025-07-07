@@ -15,6 +15,8 @@ export class GestioneSchemaComponent implements OnInit {
     grassi?: number;
     proteine?: number;
     acqua?: number;
+    is_modello?: boolean;
+  is_global?: boolean;   
   }) | null = null;
 
 
@@ -56,6 +58,8 @@ export class GestioneSchemaComponent implements OnInit {
         this.grassi = data.grassi;
         this.proteine = data.proteine;
         this.acqua = data.acqua;
+        this.schema.is_modello = data.is_modello;  // <---
+this.schema.is_global = data.is_global
         this.loading = false;
       },
       error: (err) => {
@@ -90,17 +94,34 @@ export class GestioneSchemaComponent implements OnInit {
       payload.id = this.schema.id;
     }
 
+if (this.schema?.is_modello !== undefined) {   // <---
+  payload.is_modello = this.schema.is_modello;  // <---
+}
+
+if (this.schema?.is_global !== undefined) {    // <---
+  payload.isGlobal = this.schema.is_global;    // <---
+}
+
     console.log('Payload in invio:', payload);
 
-    this.schemaService.salvaDatiGenerali(payload).subscribe({
-      next: () => {
-        this.loading = false;
-        this.message = 'Schema salvato con successo!';
-      },
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.detail || 'Errore nel salvataggio.';
-      }
-    });
+this.schemaService.salvaDatiGenerali(payload).subscribe({
+  next: () => {
+    this.loading = false;
+    this.message = 'Schema salvato con successo!';
+    const modal = new bootstrap.Modal(document.getElementById('notificaEsitoModal'));
+    modal.show();
+  },
+  error: (err) => {
+    this.loading = false;
+    this.error = err.error?.detail || 'Errore nel salvataggio.';
+    const modal = new bootstrap.Modal(document.getElementById('notificaEsitoModal'));
+    modal.show();
   }
+});
+
+  }
+  vaiARiepilogo() {
+  this.router.navigate(['/riepilogo']);
+}
+
 }

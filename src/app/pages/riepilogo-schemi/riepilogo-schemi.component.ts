@@ -2,6 +2,7 @@ import { Component, EventEmitter, OnInit, Output, AfterViewInit } from '@angular
 import { Router } from '@angular/router';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { DettagliPastoService } from 'src/app/services/dettagli-pasto.service';
 import { SchemaBrief, SchemaNutrizionaleService } from 'src/app/services/schema-nutrizionale.service';
 
 declare var bootstrap: any;
@@ -31,6 +32,7 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
 
   constructor(
     private schemaService: SchemaNutrizionaleService,
+    private dettagliService: DettagliPastoService,
     private router: Router
   ) { }
 
@@ -180,12 +182,13 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
     });
   }
 
-  esportaSchemaPdf(schemaBrief: SchemaBrief) {
-    this.schemaService.getSchemaById(schemaBrief.id).subscribe({
-      next: (schema) => this.generaPdf(schema),
-      error: (err) => console.error('Errore nel caricamento schema per PDF:', err)
-    });
-  }
+esportaSchemaPdf(schemaBrief: SchemaBrief) {
+  this.dettagliService.getSchemaCompletoById(schemaBrief.id).subscribe({
+    next: (schemaCompleto) => this.generaPdf(schemaCompleto),
+    error: (err) => console.error('Errore nel caricamento schema per PDF:', err)
+  });
+}
+
 
   mostraAnteprima(schema: SchemaBrief) {
     this.schemaService.getSchemaById(schema.id).subscribe({
@@ -205,98 +208,116 @@ export class RiepilogoSchemiComponent implements OnInit, AfterViewInit {
     return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  private generaPdf(schema: any) {
-    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 40;
-    let y = 40;
+private generaPdf(schemaCompleto: any) {
+  const schema = schemaCompleto.schema;
+  const dettagli = schemaCompleto.dettagli;
 
-    const paleBlue: [number, number, number] = [235, 245, 255];
-    const drawBackground = () => {
-      doc.setFillColor(...paleBlue);
-      doc.rect(0, 0, pageWidth, pageHeight, 'F');
-    };
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  let y = 40;
 
-    drawBackground();
+  const paleBlue: [number, number, number] = [235, 245, 255];
+  const drawBackground = () => {
+    doc.setFillColor(...paleBlue);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+  };
+
+  drawBackground();
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(30);
+  doc.text(`Schema Nutrizionale – ${schema.nome}`, margin, y);
+  y += 30;
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(12);
+  const infoFields = [
+    `kCal: ${schema.calorie ?? '-'}`,
+    `Carboidrati: ${schema.carboidrati ?? '-'}g`,
+    `Grassi: ${schema.grassi ?? '-'}g`,
+    `Proteine: ${schema.proteine ?? '-'}g`,
+    `Acqua: ${schema.acqua ?? '-'}L`
+  ];
+  infoFields.forEach(line => {
+    doc.text(line, margin, y);
+    y += 18;
+  });
+
+  y += 20;
+
+  Object.entries(dettagli ?? {}).forEach(([pasto, detRaw]) => {
+    const det = detRaw as { nome: string, opzioni: any[] };
+    if (!det?.opzioni?.length) return;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(30);
-    doc.text(`Schema Nutrizionale – ${schema.nome}`, margin, y);
-    y += 30;
+    doc.setFontSize(14);
+    doc.setTextColor(0, 80, 160);
+    doc.text(this.formatPastoKey(det.nome), margin, y);
+    y += 24;
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(12);
-    const infoFields = [
-      `Calorie: ${schema.calorie ?? '-'}`,
-      `Carboidrati: ${schema.carboidrati ?? '-'}g`,
-      `Grassi: ${schema.grassi ?? '-'}g`,
-      `Proteine: ${schema.proteine ?? '-'}g`,
-      `Acqua: ${schema.acqua ?? '-'}L`
-    ];
-    infoFields.forEach(line => {
-      doc.text(line, margin, y);
-      y += 18;
-    });
+    const body: any[] = [];
 
-    y += 20;
+    det.opzioni.forEach((opz: any, idx: number) => {
+      const opzioneLabel = opz.nome || `Opzione ${idx + 1}`;
 
-    Object.entries(schema.dettagli ?? {}).forEach(([pasto, detRaw]) => {
-      const det = detRaw as { opzioni: any[] };
-      if (!det.opzioni?.length) return;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(14);
-      doc.setTextColor(0, 80, 160);
-      doc.text(this.formatPastoKey(pasto), margin, y);
-      y += 24;
-
-      const body = det.opzioni.flatMap((opz: any, idx: number) => {
-        const label = opz.nome || `Opzione ${idx + 1}`;
-        return opz.alimenti.map((al: any, ai: number) => {
-          const isGroup = al.macronutriente === 'gruppo';
-          const name = ai === 0 ? label : '';
-          return [
-            name,
+      opz.alimenti.forEach((al: any) => {
+        if (al.macronutriente === 'gruppo' && Array.isArray(al.gruppoAlimenti)) {
+          al.gruppoAlimenti.forEach((grAl: any) => {
+            body.push([
+              opzioneLabel + ' - ' + (al.nome ?? 'Gruppo'),
+              grAl.nome ?? '-',
+              grAl.macronutriente ?? '-',
+              grAl.grammi ?? '-',
+              'Sì'
+            ]);
+          });
+        } else {
+          body.push([
+            opzioneLabel,
             al.nome ?? '-',
             al.macronutriente ?? '-',
             al.grammi ?? '-',
-            isGroup ? 'Sì' : 'No'
-          ];
-        });
-      });
-
-      autoTable(doc, {
-        startY: y,
-        margin: { left: margin, right: margin },
-        head: [['Opzione', 'Alimento', 'Macronutriente', 'Grammi', 'Gruppo']],
-        body,
-        theme: 'grid',
-        styles: {
-          font: 'helvetica',
-          fontSize: 10,
-          cellPadding: 6,
-          textColor: 50
-        },
-        headStyles: {
-          fillColor: [60, 120, 180],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        alternateRowStyles: {
-          fillColor: [245, 250, 255]
-        },
-        didDrawPage: (data) => {
-          if (data.pageNumber > 1) drawBackground();
+            'No'
+          ]);
         }
       });
-
-      y = (doc as any).lastAutoTable.finalY + 30;
     });
 
-    doc.save(`${schema.nome.replace(/\s+/g, '_').toLowerCase()}_schema.pdf`);
-  }
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin },
+      head: [['Opzione / Gruppo', 'Alimento', 'Macronutriente', 'Grammi', 'Gruppo']],
+      body,
+      theme: 'grid',
+      styles: {
+        font: 'helvetica',
+        fontSize: 10,
+        cellPadding: 6,
+        textColor: 50
+      },
+      headStyles: {
+        fillColor: [60, 120, 180],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 250, 255]
+      },
+      didDrawPage: (data) => {
+        if (data.pageNumber > 1) drawBackground();
+      }
+    });
+
+    y = (doc as any).lastAutoTable.finalY + 30;
+  });
+
+  doc.save(`${schema.nome.replace(/\s+/g, '_').toLowerCase()}_schema.pdf`);
+}
+
+
 
   apriModaleEliminazione(schema: SchemaBrief) {
     this.schemaDaEliminare = schema;

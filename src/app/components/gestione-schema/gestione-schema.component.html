@@ -40,3 +40,29 @@
     <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
       {{ loading ? 'Salvataggio...' : 'Salva Modifiche' }}
     </button>
+
+    <!-- Modale esito salvataggio -->
+<div class="modal fade" id="notificaEsitoModal" tabindex="-1" aria-labelledby="esitoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header" [ngClass]="{ 'bg-success': !error, 'bg-danger': error }">
+        <h5 class="modal-title text-white" id="esitoLabel">
+          {{ error ? 'Errore' : 'Successo' }}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">{{ error || message }}</p>
+      </div>
+      <div class="modal-footer">
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary w-100" 
+          data-bs-dismiss="modal"
+          (click)="vaiARiepilogo()"
+        >
+          Chiudi
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
