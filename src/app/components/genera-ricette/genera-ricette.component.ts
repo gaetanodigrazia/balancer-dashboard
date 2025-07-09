@@ -1,16 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { SchemaNutrizionaleService, SchemaBrief, DettagliPasto } from 'src/app/services/schema-nutrizionale.service';
+import { DettagliPastoService, SchemaCompletoDTO } from 'src/app/services/dettagli-pasto.service';
 import { HttpClient } from '@angular/common/http';
-import * as bootstrap from 'bootstrap';
 
-interface Ricetta {
+interface RicettaGenerata {
   titolo: string;
   ingredienti: { nome: string; quantita: string }[];
   procedimento: string;
-  presentazione?: string;
-  nota_nutrizionale?: string;
+  tempoPreparazione?: string;
+  difficolta?: string;
 }
+
+declare var bootstrap: any;
 
 @Component({
   selector: 'app-genera-ricette',
@@ -18,69 +19,80 @@ interface Ricetta {
   styleUrls: ['./genera-ricette.component.css']
 })
 export class GeneraRicetteComponent implements OnInit {
-  schema!: SchemaBrief;
-  dettagliPasti: { [tipoPasto: string]: DettagliPasto } = {};
-  tipiPasto = ['colazione', 'spuntino_1', 'pranzo', 'spuntino_2', 'pre_intra_post_workout', 'cena'];
-
-  ricetta: Ricetta | null = null;
+  schemaCompleto: SchemaCompletoDTO | null = null;
+  loading = false;
   error: string | null = null;
 
-  loadingPerPasto: { [tipoPasto: string]: boolean } = {};
-  loadingModal = false;
+  ricetteGenerate: { [pasto: string]: RicettaGenerata } = {};
+  loadingRicetta: { [pasto: string]: boolean } = {};
+
+  ricettaSelezionata: RicettaGenerata | null = null;
+  modalInstance: any = null;
 
   constructor(
     private route: ActivatedRoute,
-    private schemaService: SchemaNutrizionaleService,
+    private dettagliService: DettagliPastoService,
     private http: HttpClient
   ) {}
 
-  ngOnInit(): void {
-const id = this.route.snapshot.paramMap.get('id');
-if (!id || id.trim() === '') {
-  this.error = 'ID schema non valido.';
-  return;
-}
-
-    this.schemaService.getSchemaById(id).subscribe({
-      next: (data) => {
-        this.schema = data;
-        this.tipiPasto.forEach(tipo => {
-          const pasto = this.schema.dettagli?.[tipo];
-          this.dettagliPasti[tipo] = pasto?.opzioni?.length ? pasto : { opzioni: [] };
-        });
-      },
-      error: () => {
-        this.error = 'Errore nel caricamento dello schema.';
-      }
-    });
-  }
-
-  formatTipoPasto(tipo: string): string {
-    return tipo.replace(/_/g, ' ').toUpperCase();
-  }
-
-  generaRicettaPerPasto(tipoPasto: string) {
-    this.loadingPerPasto[tipoPasto] = true;
-    this.loadingModal = true;
-    this.ricetta = null;
-    this.error = null;
-
-    const modalElement = document.getElementById('ricettaModal');
-    if (modalElement) {
-      const modal = new bootstrap.Modal(modalElement);
-      modal.show();
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (!id) {
+      this.error = 'ID schema non valido.';
+      return;
     }
 
-    this.http.post<Ricetta>(`/ricette/genera/${this.schema.id}/${tipoPasto}`, {}).subscribe({
-      next: (res) => {
-        this.ricetta = res;
-        this.loadingModal = false;
-        this.loadingPerPasto[tipoPasto] = false;
+    this.loading = true;
+    this.dettagliService.getSchemaCompletoById(id).subscribe({
+      next: (data) => {
+        this.schemaCompleto = data;
+        this.loading = false;
       },
-      error: () => {
-        this.error = 'Errore nella generazione della ricetta.';
-        this.loadingModal = false;
-        this.loadingPerPasto[tipoPasto] = false;
+      error: (err) => {
+        console.error('Errore nel caricamento dello schema completo:', err);
+        this.error = err.error?.detail || 'Errore nel caricamento dello schema.';
+        this.loading = false;
+      }
+    });
+
+    // Inizializza la modale
+    setTimeout(() => {
+      const modalEl = document.getElementById('ricettaModal');
+      if (modalEl) {
+        this.modalInstance = new bootstrap.Modal(modalEl);
+      }
+    }, 0);
+  }
+
+  getPastiKeys(): string[] {
+    return this.schemaCompleto?.dettagli ? Object.keys(this.schemaCompleto.dettagli) : [];
+  }
+
+  generaRicettaPasto(nomePasto: string) {
+    this.loadingRicetta[nomePasto] = true;
+    this.error = null;
+
+    const body = {
+      nomePasto,
+      schemaJson: this.route.snapshot.paramMap.get('id')
+    };
+
+    this.http.post<RicettaGenerata>('http://localhost:8080/api/openai/genera-ricetta', body).subscribe({
+      next: (res) => {
+        console.log('✅ Ricetta ricevuta:', res);
+        this.ricetteGenerate[nomePasto] = res;
+        this.ricettaSelezionata = res;
+        this.loadingRicetta[nomePasto] = false;
+
+        // Mostra la modale con la ricetta generata
+        setTimeout(() => {
+          this.modalInstance?.show();
+        }, 0);
+      },
+      error: (err) => {
+        console.error(`Errore nella generazione della ricetta per ${nomePasto}:`, err);
+        this.error = `Errore nella generazione della ricetta per ${nomePasto}.`;
+        this.loadingRicetta[nomePasto] = false;
       }
     });
   }

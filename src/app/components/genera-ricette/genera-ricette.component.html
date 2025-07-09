@@ -1,73 +1,87 @@
-<div class="card p-4 shadow-sm rounded-4 bg-white">
-  <h5 class="mb-4">🍽️ Generazione Ricetta dallo Schema: {{ schema?.nome }}</h5>
+<div class="container my-4">
+  <h5>🍽️ Generazione Ricette dallo Schema</h5>
 
-  <div *ngFor="let tipo of tipiPasto" class="mb-4 border rounded-3 p-3 bg-light">
-    <!-- Intestazione riga con titolo e bottone -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h6 class="text-primary text-uppercase mb-0">{{ formatTipoPasto(tipo) }}</h6>
-      <button class="btn btn-sm btn-outline-primary" (click)="generaRicettaPerPasto(tipo)" [disabled]="loading">
-        {{ loading ? 'Genera...' : 'Genera Ricetta' }}
-      </button>
-    </div>
+  <div *ngIf="loading" class="text-center my-4">
+    <div class="spinner-border text-primary"></div>
+  </div>
 
-    <!-- Lista opzioni -->
-    <div *ngIf="schema.dettagli[tipo]?.opzioni?.length > 0; else noOptions">
-      <div *ngFor="let opz of schema.dettagli[tipo].opzioni; let i = index" class="border p-3 mb-2 rounded bg-white">
-        <strong class="text-secondary">{{ opz.nome || ('Opzione ' + (i + 1)) }}</strong>
-        <ul class="mt-2 mb-0">
-          <li *ngFor="let al of opz.alimenti">
-            {{ al.nome }} – {{ al.macronutriente }} – {{ al.grammi }}g
-          </li>
-        </ul>
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <div *ngIf="schemaCompleto && !loading">
+    <h5 class="mb-3">Schema: <strong>{{ schemaCompleto.schema.nome }}</strong></h5>
+
+    <div *ngFor="let pastoKey of getPastiKeys()" class="mb-4">
+      <div class="card shadow-sm rounded-3">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          {{ pastoKey }}
+          <button
+            class="btn btn-sm btn-light"
+            (click)="generaRicettaPasto(pastoKey)"
+            [disabled]="loadingRicetta[pastoKey]"
+          >
+            {{ loadingRicetta[pastoKey] ? 'Generazione...' : 'Genera Ricetta' }}
+          </button>
+        </div>
+
+        <div class="card-body">
+          <div *ngIf="schemaCompleto.dettagli[pastoKey]?.opzioni?.length; else noOpzioni">
+            <div *ngFor="let opzione of schemaCompleto.dettagli[pastoKey].opzioni" class="mb-2">
+              <h6 class="text-primary">{{ opzione.nome }}</h6>
+              <ul class="list-group">
+                <li *ngFor="let alimento of opzione.alimenti" class="list-group-item">
+                  <div *ngIf="alimento.macronutriente !== 'gruppo'">
+                    {{ alimento.nome }} - {{ alimento.grammi }}g ({{ alimento.macronutriente }})
+                  </div>
+                  <div *ngIf="alimento.macronutriente === 'gruppo'">
+                    <strong>{{ alimento.nome }} (Gruppo)</strong>
+                    <ul class="list-group mt-1">
+                      <li *ngFor="let grAl of alimento.gruppoAlimenti" class="list-group-item">
+                        {{ grAl.nome }} - {{ grAl.grammi }}g ({{ grAl.macronutriente }})
+                      </li>
+                    </ul>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <ng-template #noOpzioni>
+            <p class="text-muted">Nessuna opzione disponibile per questo pasto.</p>
+          </ng-template>
+
+        </div>
       </div>
     </div>
-
-    <ng-template #noOptions>
-      <p class="text-muted fst-italic">Nessuna opzione disponibile per questo pasto.</p>
-    </ng-template>
   </div>
 </div>
 
 
-
-<!-- Modal Ricetta -->
+<!-- MODALE VISUALIZZAZIONE RICETTA -->
 <div class="modal fade" id="ricettaModal" tabindex="-1" aria-labelledby="ricettaModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content shadow">
-      <div class="modal-header">
-        <h5 class="modal-title" id="ricettaModalLabel">🍽️ Ricetta Generata</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="ricettaModalLabel">🍳 Ricetta Generata</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
       </div>
-      <div class="modal-body">
-        <div *ngIf="loadingModal" class="d-flex justify-content-center align-items-center p-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Caricamento...</span>
-          </div>
-        </div>
-
-        <div *ngIf="!loadingModal && ricetta">
-          <h5 class="mb-3">{{ ricetta.titolo }}</h5>
-
-          <h6>Ingredienti:</h6>
-          <ul>
-            <li *ngFor="let ing of ricetta.ingredienti">
-              {{ ing.nome }} – {{ ing.quantita }}
-            </li>
-          </ul>
-
-          <h6 class="mt-3">Procedimento:</h6>
-          <p>{{ ricetta.procedimento }}</p>
-
-          <div *ngIf="ricetta.presentazione">
-            <h6 class="mt-3">Presentazione:</h6>
-            <p>{{ ricetta.presentazione }}</p>
-          </div>
-
-          <div *ngIf="ricetta.nota_nutrizionale">
-            <h6 class="mt-3">Nota nutrizionale:</h6>
-            <p>{{ ricetta.nota_nutrizionale }}</p>
-          </div>
-        </div>
+      <div class="modal-body" *ngIf="ricettaSelezionata">
+        <h5>{{ ricettaSelezionata.titolo }}</h5>
+        <ul>
+          <li *ngFor="let ingr of ricettaSelezionata.ingredienti">
+            {{ ingr.nome }} - {{ ingr.quantita }}
+          </li>
+        </ul>
+        <p><strong>Procedimento:</strong> {{ ricettaSelezionata.procedimento }}</p>
+        <p *ngIf="ricettaSelezionata.tempoPreparazione">
+          ⏱️ <strong>Tempo:</strong> {{ ricettaSelezionata.tempoPreparazione }}
+        </p>
+        <p *ngIf="ricettaSelezionata.difficolta">
+          💪 <strong>Difficoltà:</strong> {{ ricettaSelezionata.difficolta }}
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary w-100" data-bs-dismiss="modal">Chiudi</button>
       </div>
     </div>
   </div>
