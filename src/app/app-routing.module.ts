@@ -14,6 +14,7 @@ import { LoginComponent } from './pages/login/login.component';
 
 import { LayoutComponent } from '../app/pages/layout/layout.component';
 import { authGuard } from './auth/auth.guard';
+import { PazientiComponent } from './pages/pazienti/pazienti.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -33,6 +34,7 @@ const routes: Routes = [
       { path: 'gestione-schema', component: RiepilogoSchemiComponent },
       { path: 'gestione-pasti', component: RiepilogoSchemiComponent },
       { path: 'gestione-pasti/:id', component: GestionePastiComponent },
+       { path: 'pazienti', component: PazientiComponent },
       { path: 'gestione-schema/:id', component: GestioneSchemaComponent },
       { path: 'genera-ricette/:id', component: GeneraRicetteComponent }
     ]

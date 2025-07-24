@@ -18,6 +18,7 @@ import { GeneraRicetteComponent } from './components/genera-ricette/genera-ricet
 import { AuthInterceptor } from '../app/auth/auth.interceptor';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgcCookieConsentModule, NgcCookieConsentConfig } from 'ngx-cookieconsent';
+import { PazientiComponent } from './pages/pazienti/pazienti.component';
 
 const cookieConfig:NgcCookieConsentConfig = {
   cookie: {
@@ -75,6 +76,7 @@ GestionePastiComponent,
 HomeComponent,
 EsportaComponent,
 GeneraRicetteComponent,
+PazientiComponent
 ],
   imports: [
     BrowserModule,

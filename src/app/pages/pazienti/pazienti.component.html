@@ -1,0 +1,78 @@
+<!-- 👤 Pazienti associati -->
+<div class="card mt-4 shadow-sm">
+  <div class="card-header bg-secondary text-white">
+    <strong>Pazienti Associati</strong>
+  </div>
+  <div class="card-body">
+    <div *ngIf="loading">Caricamento...</div>
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+    <div *ngIf="pazienti.length === 0 && !loading" class="text-muted fst-italic">
+      Nessun paziente associato.
+    </div>
+
+    <table class="table table-sm table-hover" *ngIf="pazienti.length > 0">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>Confermato</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let paziente of pazienti">
+          <td>{{ paziente.nome }}</td>
+          <td>{{ paziente.email }}</td>
+          <td>
+            <span [ngClass]="paziente.confermato ? 'text-success' : 'text-warning'">
+              {{ paziente.confermato ? '✔️ Sì' : '⏳ No' }}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" (click)="rimuovi(paziente.id)">🗑️ Rimuovi</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 🔄 Richieste da confermare -->
+<div class="card mt-4 shadow-sm">
+  <div class="card-header bg-warning text-dark">
+    <strong>Richieste da Confermare</strong>
+  </div>
+  <div class="card-body">
+    <div *ngIf="loadingPending">Caricamento richieste...</div>
+    <div *ngIf="errorPending" class="alert alert-danger">{{ errorPending }}</div>
+
+    <div *ngIf="richiestePending.length === 0 && !loadingPending" class="text-muted fst-italic">
+      Nessuna richiesta in sospeso.
+    </div>
+
+    <table class="table table-sm table-hover" *ngIf="richiestePending.length > 0">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Email</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let richiesta of richiestePending">
+          <td>{{ richiesta.nome }} {{ richiesta.cognome }}</td>
+          <td>{{ richiesta.email }}</td>
+          <td>
+            <button class="btn btn-sm btn-success" (click)="conferma(richiesta.id)">
+              ✅ Conferma
+            </button>
+          </td>
+                    <td>
+<button class="btn btn-sm btn-outline-danger" (click)="rimuovi(paziente.id)">🗑️ Rimuovi</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
